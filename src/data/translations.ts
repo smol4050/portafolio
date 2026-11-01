@@ -3,6 +3,9 @@ import type { Locale } from '../types/project'
 
 export const copy = {
   es: {
+    metaTitle: 'Luis Stiven Méndez — Portafolio',
+    metaDescription:
+      'Portafolio de Luis Stiven Méndez, estudiante de Ingeniería Multimedia con interés en desarrollo de software, videojuegos y pruebas manuales de calidad.',
     navAbout: 'Sobre mí',
     navProjects: 'Proyectos',
     navSkills: 'Habilidades',
@@ -104,6 +107,9 @@ export const copy = {
   },
 
   en: {
+    metaTitle: 'Luis Stiven Méndez — Portfolio',
+    metaDescription:
+      'Portfolio of Luis Stiven Méndez, a Multimedia Engineering student interested in software development, video games, and manual quality testing.',
     navAbout: 'About',
     navProjects: 'Projects',
     navSkills: 'Skills',

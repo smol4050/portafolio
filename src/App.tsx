@@ -137,7 +137,12 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = 'dark';
     document.documentElement.lang = locale;
-  }, [locale]);
+    document.title = t.metaTitle;
+    document.querySelector('meta[name="description"]')?.setAttribute('content', t.metaDescription);
+    document.querySelector('meta[property="og:title"]')?.setAttribute('content', t.metaTitle);
+    document.querySelector('meta[property="og:description"]')?.setAttribute('content', t.metaDescription);
+    document.querySelector('meta[property="og:locale"]')?.setAttribute('content', locale === 'es' ? 'es_CO' : 'en_US');
+  }, [locale, t]);
 
   const lockScroll = (lock: boolean) => {
     document.documentElement.style.overflow = lock ? 'hidden' : '';

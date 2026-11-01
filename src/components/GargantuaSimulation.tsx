@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import {
   Play, Pause, Volume2, VolumeX, Sliders, Camera, RotateCcw,
   Sparkles, Maximize2, Eye, BookOpen, X, Compass, Aperture,
-  ArrowLeft, Download, Orbit, Globe
+  ArrowLeft, Download
 } from 'lucide-react';
 import * as THREE from 'three';
 
@@ -51,13 +51,6 @@ const rayFS = /* glsl */ `
   uniform float u_thickness;
   uniform float u_maxSteps;
   uniform float u_outScale;
-
-  uniform float u_planetOn;
-  uniform float u_planetDist;
-  uniform float u_planetPhase;
-  uniform float u_planetIncl;
-  uniform float u_planetR;
-  uniform float u_planetRot;
 
   varying vec2 vUv;
 
@@ -140,49 +133,6 @@ const rayFS = /* glsl */ `
     return tint * s * mag * 0.8;
   }
 
-  /* Planeta oceánico tipo Miller (acoplamiento de marea: siempre muestra la misma cara).
-     Iluminado por la radiación térmica del disco: la luz llega desde el núcleo (-pc),
-     con color según la temperatura local del disco, caída ~1/r y corrimiento al rojo. */
-  vec3 shadePlanet(vec3 n, vec3 d, vec3 pc) {
-    float dC = length(pc);
-    vec3 L = -pc / dC;
-    vec3 V = -d;
-
-    float cr = cos(u_planetRot);
-    float sr = sin(u_planetRot);
-    vec3 nb = vec3(cr * n.x - sr * n.z, n.y, sr * n.x + cr * n.z);
-
-    float h = fbm3(nb * 2.4 + vec3(4.0, 1.0, 7.0));
-    float landM = smoothstep(0.55, 0.61, h);
-    float shallow = smoothstep(0.30, 0.55, h);
-    float swell = vnoise(nb * vec3(46.0, 18.0, 46.0) + vec3(0.0, 0.0, u_time * 0.35));
-
-    vec3 ocean = mix(vec3(0.012, 0.075, 0.150), vec3(0.060, 0.300, 0.380), shallow) * (0.8 + 0.4 * swell);
-    vec3 rock = mix(vec3(0.170, 0.145, 0.130), vec3(0.420, 0.360, 0.310), smoothstep(0.55, 0.9, h));
-    vec3 albedo = mix(ocean, rock, landM);
-
-    float x = max(dC / u_rIn, 1.001);
-    vec3 lightCol = mix(emitterColor(u_tempMax * tempProfile(x)), vec3(1.0, 0.92, 0.88), 0.35);
-    float gG = sqrt(max(1.0 - u_rs / dC, 0.02));
-    float irr = u_brightness * 7.0 * pow(u_rs / dC, 1.4) * gG;
-
-    // Terminador direccional (el disco es extenso: borde ligeramente suavizado)
-    float ndl = dot(n, L);
-    float diff = mix(max(ndl, 0.0), smoothstep(-0.10, 0.9, ndl), 0.5);
-    // Relleno tenue del resto del disco sobre la cara nocturna
-    float fill = 0.07 * (0.5 + 0.5 * (1.0 - n.y * n.y));
-
-    vec3 H = normalize(L + V);
-    float sp = pow(max(dot(n, H), 0.0), mix(180.0, 40.0, swell));
-    float spec = sp * (1.0 - landM) * smoothstep(0.0, 0.25, ndl);
-    float fres = pow(1.0 - max(dot(n, V), 0.0), 4.0);
-
-    vec3 c = albedo * lightCol * irr * (diff + fill);
-    c += lightCol * irr * spec * 1.6;
-    c += lightCol * irr * fres * 0.55 * smoothstep(-0.25, 0.6, ndl);
-    return c;
-  }
-
   /* Geodésicas nulas de Schwarzschild + término gravitomagnético (spin) */
   vec3 accel(vec3 p, vec3 v) {
     float r2 = dot(p, p);
@@ -215,18 +165,6 @@ const rayFS = /* glsl */ `
     vec3 minP = p;
     bool hitHorizon = false;
 
-    // Planeta: el radio de test incluye medio píxel para antialiasing de la silueta
-    // Órbita 3D circular inclinada (misma fórmula que planetPosition() en JS).
-    // La fase se integra en JS (no u_time * velocidad) para que mover el slider no teletransporte el planeta.
-    float sPh = sin(u_planetPhase);
-    vec3 pc = vec3(u_planetDist * cos(u_planetPhase),
-                   -u_planetDist * sPh * sin(u_planetIncl),
-                   u_planetDist * sPh * cos(u_planetIncl));
-    bool planetLive = u_planetOn > 0.5;
-    bool planetDone = false;
-    float pixW = 2.0 * u_tanHalfFov * length(pc - u_camPos) / u_resolution.y;
-    float Rt = u_planetR + 0.5 * pixW;
-
     vec3 a = accel(p, v);
     float jitter = hash13(vec3(gl_FragCoord.xy, floor(u_time * 60.0)));
 
@@ -251,10 +189,6 @@ const rayFS = /* glsl */ `
       if (radial) {
         if (ay > layer) ds = min(ds, max(0.55 * (ay - layer), 0.025));
         else            ds = min(ds, max(0.5 * H + 0.012, 0.02));
-      }
-      if (planetLive && !planetDone) {
-        float dPl = length(p - pc) - Rt;
-        ds = min(ds, max(0.4 * dPl, 0.01));
       }
       if (i == 0) ds *= 0.5 + 0.5 * jitter;
       ds = max(ds, 0.008);
@@ -311,29 +245,6 @@ const rayFS = /* glsl */ `
 
       vec3 pn = p + v * ds + 0.5 * a * ds * ds;
 
-      // El rayo ya viene curvado por la geodésica: la luz del planeta sufre lente gravitacional
-      if (planetLive && !planetDone) {
-        vec3 seg = pn - p;
-        float sl = length(seg);
-        vec3 d = seg / max(sl, 1e-5);
-        vec3 w = p - pc;
-        float b = dot(w, d);
-        float disc = b * b - (dot(w, w) - Rt * Rt);
-        if (disc > 0.0) {
-          float sq = sqrt(disc);
-          float tHit = max(-b - sq, 0.0);
-          if (tHit < sl && (-b + sq) > 0.0) {
-            vec3 ph = p + d * tHit;
-            float imp = sqrt(max(dot(w, w) - b * b, 0.0));
-            float cov = clamp((Rt - imp) / max(pixW, 1e-4), 0.0, 1.0);
-            vec3 pcol = shadePlanet(normalize(ph - pc), d, pc);
-            col += trans * cov * pcol;
-            trans *= 1.0 - cov;
-            planetDone = true;
-            if (trans < 0.02) { trans = 0.0; break; }
-          }
-        }
-      }
       vec3 a2 = accel(pn, v + a * ds);
       v = normalize(v + 0.5 * (a + a2) * ds);
       p = pn;
@@ -441,26 +352,7 @@ const deriveGeometry = (mass: number, spin: number) => {
   return { rs, rIn, rOut };
 };
 
-/* =========================================================
-   PLANETA EN ÓRBITA — 'Aethelgard' (oceánico, estilo Miller)
-   Órbita circular kepleriana con GM = rs/2 (c = 1), inclinada unos 10° respecto
-   al disco (ajustable) para que se lea como un lazo 3D y no como un vaivén lateral. Co-rota con el disco
-   (la fase decrece, igual que la velocidad del disco en el shader) y siempre se
-   mantiene fuera de la ISCO (rIn).
-   ========================================================= */
-const PLANET_VISUAL_RATE = 3.2; // acelera la órbita para que sea apreciable (~20 s de periodo)
-
-const planetRadius = (rs: number) => 0.3 * rs;
-const orbitRadius = (distRs: number, g: { rs: number; rIn: number }) =>
-  Math.max(distRs * g.rs, g.rIn * 1.12);
-const orbitalOmega = (R: number, rs: number) => PLANET_VISUAL_RATE * Math.sqrt((0.5 * rs) / (R * R * R));
 const wrapPi = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
-
-const planetPosition = (phase: number, R: number, incl: number, out: THREE.Vector3) => {
-  const x = R * Math.cos(phase);
-  const z0 = R * Math.sin(phase);
-  return out.set(x, -z0 * Math.sin(incl), z0 * Math.cos(incl));
-};
 
 /* Aísla los eventos de la UI: un clic o arrastre sobre un control NUNCA llega al canvas */
 const stop = (e: React.SyntheticEvent) => e.stopPropagation();
@@ -488,17 +380,14 @@ const QUALITY_ORDER: QualityKey[] = ['low', 'medium', 'high', 'ultra'];
 
 const DEFAULTS = {
   mass: 1.0, spin: 0.75, temperature: 7600, brightness: 1.1, spinSpeed: 1.0,
-  lensing: 1.0, doppler: 0.8, thickness: 1.0, exposure: 1.0, bloom: 0.6,
-  planetSpeed: 1.0, planetDist: 3.6, planetIncl: 0.5
+  lensing: 1.0, doppler: 0.8, thickness: 1.0, exposure: 1.0, bloom: 0.6
 };
 
 const CAMERA_PRESETS = {
   orbit: { radius: 16.5, theta: Math.PI / 2, phi: 1.48, fov: 36 },
   front: { radius: 14, theta: Math.PI / 2, phi: 0.14, fov: 38 },
   edge: { radius: 15, theta: 0.0, phi: 1.5608, fov: 36 },
-  miller: { radius: 8.5, theta: Math.PI / 3, phi: 1.5, fov: 62 },
-  // Seguimiento del planeta: la cámara persigue su órbita (theta/radius se recalculan por frame)
-  planet: { radius: 6.8, theta: 0, phi: 1.36, fov: 48 }
+  miller: { radius: 8.5, theta: Math.PI / 3, phi: 1.5, fov: 62 }
 };
 
 class SpaceSoundSynth {
@@ -607,17 +496,15 @@ export default function GargantuaSimulation({ embedded = false, absorbPhase = 'i
   const [infoModalOpen, setInfoModalOpen] = useState(false);
   const [activePreset, setActivePreset] = useState<keyof typeof CAMERA_PRESETS>('orbit');
   const [fps, setFps] = useState(60);
-  const [planetOn, setPlanetOn] = useState(true);
 
   const isVisibleRef = useRef(true);
 
   const upd = useCallback((key: keyof typeof DEFAULTS) => (val: number) => setSim((s) => ({ ...s, [key]: val })), []);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const paramsRef = useRef<Record<string, any>>({});
-  paramsRef.current = { ...sim, quality, paused, activePreset, absorbPhase, planetOn };
+  paramsRef.current = { ...sim, quality, paused, activePreset, absorbPhase };
   const onReadyRef = useRef(onReady);
   onReadyRef.current = onReady;
-  const followOffRef = useRef({ theta: 0.8, phi: 1.36, zoom: 1 });
   const camTargetRef = useRef({ ...CAMERA_PRESETS.orbit });
   const camCurRef = useRef({ ...CAMERA_PRESETS.orbit });
   const interactRef = useRef({ dragging: false, last: 0 });
@@ -629,8 +516,6 @@ export default function GargantuaSimulation({ embedded = false, absorbPhase = 'i
     // Camino angular más corto: evita giros de varias vueltas al cambiar de preset
     goal.theta = camCurRef.current.theta + wrapPi(goal.theta - camCurRef.current.theta);
     camTargetRef.current = goal;
-    followOffRef.current = { theta: 0.8, phi: 1.36, zoom: 1 };
-    if (key === 'planet') setPlanetOn(true);
     interactRef.current.last = performance.now();
   }, []);
 
@@ -720,13 +605,7 @@ export default function GargantuaSimulation({ embedded = false, absorbPhase = 'i
         u_doppler: { value: DEFAULTS.doppler },
         u_thickness: { value: 1 },
         u_maxSteps: { value: QUALITY[quality].steps },
-        u_outScale: { value: 1 },
-        u_planetOn: { value: 1 },
-        u_planetDist: { value: 3.4 },
-        u_planetPhase: { value: 0 },
-        u_planetIncl: { value: 0.5 },
-        u_planetR: { value: 0.285 },
-        u_planetRot: { value: 0 }
+        u_outScale: { value: 1 }
       }
     });
 
@@ -818,15 +697,9 @@ export default function GargantuaSimulation({ embedded = false, absorbPhase = 'i
       if (!prev) return;
       const dx = e.clientX - prev.x;
       const dy = e.clientY - prev.y;
-      if (paramsRef.current.activePreset === 'planet') {
-        const fo = followOffRef.current;
-        fo.theta -= dx * 0.005;
-        fo.phi = Math.max(0.3, Math.min(Math.PI - 0.3, fo.phi - dy * 0.005));
-      } else {
-        const tgt = camTargetRef.current;
-        tgt.theta -= dx * 0.005;
-        tgt.phi = Math.max(0.05, Math.min(Math.PI - 0.05, tgt.phi - dy * 0.005));
-      }
+      const tgt = camTargetRef.current;
+      tgt.theta -= dx * 0.005;
+      tgt.phi = Math.max(0.05, Math.min(Math.PI - 0.05, tgt.phi - dy * 0.005));
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       interactRef.current.last = performance.now();
     };
@@ -839,13 +712,8 @@ export default function GargantuaSimulation({ embedded = false, absorbPhase = 'i
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      if (paramsRef.current.activePreset === 'planet') {
-        const fo = followOffRef.current;
-        fo.zoom = Math.max(0.5, Math.min(4, fo.zoom * Math.exp(e.deltaY * 0.001)));
-      } else {
-        const tgt = camTargetRef.current;
-        tgt.radius = Math.max(4, Math.min(45, tgt.radius * Math.exp(e.deltaY * 0.001)));
-      }
+      const tgt = camTargetRef.current;
+      tgt.radius = Math.max(4, Math.min(45, tgt.radius * Math.exp(e.deltaY * 0.001)));
       interactRef.current.last = performance.now();
     };
 
@@ -882,10 +750,6 @@ export default function GargantuaSimulation({ embedded = false, absorbPhase = 'i
     let fpsLast = performance.now();
     let boost = 0; // intensidad suavizada de la secuencia de absorción
     const tmpPos = new THREE.Vector3();
-    const planetPos = new THREE.Vector3();
-    const lookTmp = new THREE.Vector3();
-    let planetPhase = 0.9;
-    let lookBlend = 0;
     let readyFired = false;
 
     // Apertura de la simulación: la cámara parte algo más cerca y se aleja suavemente
@@ -914,27 +778,15 @@ export default function GargantuaSimulation({ embedded = false, absorbPhase = 'i
       const targetBoost = PHASE_BOOST[(P.absorbPhase as AbsorbPhase) || 'idle'];
       boost += (targetBoost - boost) * (1 - Math.exp(-dt * 7));
 
-      // --- Planeta: fase orbital kepleriana ---
       const geo = deriveGeometry(P.mass, P.spin);
-      const orbR = orbitRadius(P.planetDist, geo);
-      if (!P.paused) planetPhase -= dt * orbitalOmega(orbR, geo.rs) * P.planetSpeed;
-      planetPosition(planetPhase, orbR, P.planetIncl, planetPos);
 
       const tgt = camTargetRef.current;
       const cur = camCurRef.current;
       const inter = interactRef.current;
       const now = performance.now();
 
-      const following = P.activePreset === 'planet' && P.planetOn;
       const autoOrbit = P.activePreset === 'orbit' && now - inter.last > 2000;
-      if (following) {
-        // Cámara de persecución: detrás del planeta en su órbita, mirando hacia él
-        const fo = followOffRef.current;
-        const az = Math.atan2(planetPos.z, planetPos.x);
-        tgt.theta = cur.theta + wrapPi(az + fo.theta - cur.theta);
-        tgt.phi = fo.phi;
-        tgt.radius = (orbR + 3.4) * fo.zoom;
-      } else if (!inter.dragging && (boost > 0.05 || autoOrbit)) {
+      if (!inter.dragging && (boost > 0.05 || autoOrbit)) {
         tgt.theta += dt * (0.1 + 1.7 * boost);
       }
 
@@ -952,10 +804,8 @@ export default function GargantuaSimulation({ embedded = false, absorbPhase = 'i
         cur.radius * Math.sin(cur.phi) * Math.sin(cur.theta)
       );
 
-      lookBlend += ((following ? 1 : 0) - lookBlend) * k;
-      lookTmp.copy(planetPos).multiplyScalar(0.55 * lookBlend); // 0 → mira a la singularidad
       camera.position.copy(tmpPos);
-      camera.lookAt(lookTmp);
+      camera.lookAt(0, 0, 0);
       camera.updateMatrixWorld();
       const te = camera.matrixWorld.elements;
 
@@ -970,12 +820,6 @@ export default function GargantuaSimulation({ embedded = false, absorbPhase = 'i
       U.u_rIn.value = geo.rIn;
       U.u_rOut.value = geo.rOut;
       U.u_spin.value = P.spin;
-      U.u_planetOn.value = P.planetOn ? 1 : 0;
-      U.u_planetDist.value = orbR;
-      U.u_planetPhase.value = planetPhase;
-      U.u_planetIncl.value = P.planetIncl;
-      U.u_planetR.value = planetRadius(geo.rs);
-      U.u_planetRot.value = planetPhase; // acoplamiento de marea: la cara visible rota con la órbita
 
       // Hiperaceleración de uniforms (sobrecarga de radiación)
       U.u_tempMax.value = P.temperature * (1 + 0.5 * boost);
@@ -1087,7 +931,6 @@ export default function GargantuaSimulation({ embedded = false, absorbPhase = 'i
 
   const resetAll = () => {
     setSim(DEFAULTS);
-    setPlanetOn(true);
     applyPreset('orbit');
   };
 
@@ -1130,7 +973,6 @@ export default function GargantuaSimulation({ embedded = false, absorbPhase = 'i
     );
   }
 
-  const minDistRs = geo.rIn * 1.12 / geo.rs;
 
   return (
     <div className="gargantua-full-fullscreen">
@@ -1188,50 +1030,6 @@ export default function GargantuaSimulation({ embedded = false, absorbPhase = 'i
             <Slider label="Lente Gravitacional" value={sim.lensing} min={0.1} max={2.0} step={0.05} onChange={upd('lensing')} />
             <Slider label="Corrimiento Doppler" value={sim.doppler} min={0} max={1.6} step={0.05} onChange={upd('doppler')} />
 
-            <div className="gargantua-planet-block">
-              <div className="gargantua-toggle-row">
-                <span className="gargantua-toggle-label">
-                  <Globe style={{ width: '0.95rem', height: '0.95rem', color: '#c084fc' }} />
-                  Planeta 'Aethelgard'
-                </span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={planetOn}
-                  aria-label="Mostrar u ocultar el planeta"
-                  className={`gargantua-switch ${planetOn ? 'on' : ''}`}
-                  {...isolate(() => setPlanetOn((v) => !v))}
-                >
-                  <span />
-                </button>
-              </div>
-              {planetOn && (
-                <>
-                  <Slider label="Velocidad Orbital" value={sim.planetSpeed} min={0} max={4} step={0.1} onChange={upd('planetSpeed')} />
-                  <Slider
-                    label="Distancia Orbital (r_s)"
-                    value={sim.planetDist}
-                    min={1.6}
-                    max={6.4}
-                    step={0.1}
-                    onChange={upd('planetDist')}
-                    format={(v) => `${Math.max(v, minDistRs).toFixed(2)} rs`}
-                  />
-                  <Slider
-                    label="Inclinación Orbital"
-                    value={sim.planetIncl}
-                    min={0}
-                    max={1.2}
-                    step={0.02}
-                    onChange={upd('planetIncl')}
-                    format={(v) => `${Math.round((v * 180) / Math.PI)}°`}
-                  />
-                  <div className="gargantua-hint">
-                    Órbita mínima estable = {minDistRs.toFixed(2)} r<sub>s</sub> (ISCO). Con inclinación cercana a 0° el planeta cruza justo detrás de la sombra y forma el anillo de Einstein.
-                  </div>
-                </>
-              )}
-            </div>
           </div>
         )}
 
@@ -1263,7 +1061,6 @@ export default function GargantuaSimulation({ embedded = false, absorbPhase = 'i
             {presetBtn('front', Eye, 'Ecuatorial', 'Lente Gravitacional')}
             {presetBtn('edge', Maximize2, 'Horizontal', 'Perfil de Disco')}
             {presetBtn('miller', Eye, 'Proximidad', 'Baja Órbita')}
-            {presetBtn('planet', Orbit, 'Planeta', 'Seguimiento Orbital')}
           </div>
         )}
       </div>
@@ -1294,9 +1091,6 @@ export default function GargantuaSimulation({ embedded = false, absorbPhase = 'i
               </div>
               <div style={{ padding: '0.85rem', background: 'rgba(25, 12, 48, 0.6)', borderRadius: '0.75rem', border: '1px solid rgba(168,85,247,0.2)' }}>
                 <strong style={{ color: '#c084fc' }}>Anillo de Fotones:</strong> Los rayos que rozan la esfera de fotones (1.5 r<sub>s</sub>) orbitan el agujero negro antes de escapar y dibujan el borde luminoso de la sombra.
-              </div>
-              <div style={{ padding: '0.85rem', background: 'rgba(25, 12, 48, 0.6)', borderRadius: '0.75rem', border: '1px solid rgba(168,85,247,0.2)' }}>
-                <strong style={{ color: '#c084fc' }}>Planeta Aethelgard:</strong> Orbita fuera de la ISCO con acoplamiento de marea. Su luz sigue las mismas geodésicas que la del disco: al pasar tras la sombra se estira en arcos, y su cara iluminada siempre mira al núcleo, bañada por la radiación térmica del disco (con corrimiento al rojo gravitacional).
               </div>
             </div>
           </div>

@@ -96,6 +96,23 @@ export const projects: Project[] = [
     url: 'https://camilius13.itch.io/elevator',
   },
   {
+    number: '10',
+    name: 'El Hueco',
+    category: {
+      es: 'VIDEOJUEGO · GAME JAM · AVENTURA 3D',
+      en: 'VIDEO GAME · GAME JAM · 3D ADVENTURE',
+    },
+    description: {
+      es: 'Un astronauta varado en un planeta misterioso debe reunir minipiezas para reconstruir su nave mientras los nativos del lugar intentan robarle los materiales.',
+      en: 'Stranded on a mysterious planet, an astronaut must collect small parts to rebuild their ship while the locals try to steal the materials.',
+    },
+    // TODO: confirmar motor.
+    technologies: ['Gameplay'],
+    status: 'TERMINADO',
+    type: 'GAME',
+    url: 'https://juanca-art.itch.io/el-hueco',
+  },
+  {
     number: '07',
     name: 'Koi',
     category: {
@@ -141,26 +158,20 @@ export const projects: Project[] = [
     type: 'GAME',
     url: 'https://juanca25-10.github.io/SitioWebVideojuegos_Embolatados_DevBlog/',
   },
-  // Para activar un borrador, completa sus campos y elimina draft: true.
-  {
-    number: '10',
-    name: 'POR DEFINIR 1',
-    category: { es: '', en: '' },
-    description: { es: '', en: '' },
-    technologies: [],
-    status: '',
-    type: '',
-    draft: true,
-  },
   {
     number: '11',
-    name: 'POR DEFINIR 2',
-    category: { es: '', en: '' },
-    description: { es: '', en: '' },
-    technologies: [],
-    status: '',
-    type: '',
-    draft: true,
+    name: 'Carlos Duty',
+    category: {
+      es: 'VIDEOJUEGO · SHOOTER',
+      en: 'VIDEO GAME · SHOOTER',
+    },
+    description: {
+      es: 'Shooter multijugador con pantalla dividida, desarrollado en Unity.',
+      en: 'A split-screen multiplayer shooter developed in Unity.',
+    },
+    technologies: ['Unity', 'C#'],
+    status: 'EN DESARROLLO',
+    type: 'GAME',
   },
 ]
 
@@ -255,6 +266,28 @@ export const projectDetails: Record<string, ProjectDetails> = {
       en: ['Unity', 'C#', 'Gameplay'],
     },
   },
+  '10': {
+    overview: {
+      es: 'Un astronauta varado en un planeta misterioso debe reunir minipiezas para reconstruir su nave mientras los nativos del lugar intentan robarle los materiales.',
+      en: 'Stranded on a mysterious planet, an astronaut must collect small parts to rebuild their ship while the locals try to steal the materials.',
+    },
+    role: {
+      es: 'Gameplay Programming & Logic en un equipo de cuatro personas. Equipo: Camilius13 (Gameplay Programming & Logic); Smol (Luis Stiven Méndez; Gameplay Programming & Logic); WaenVFX (3D Art, UI, Visual Effects & Post-Processing); Juanca Art (3D Art & Environment Design).',
+      en: 'Gameplay Programming & Logic on a four-person team. Team: Camilius13 (Gameplay Programming & Logic); Smol (Luis Stiven Méndez; Gameplay Programming & Logic); WaenVFX (3D Art, UI, Visual Effects & Post-Processing); Juanca Art (3D Art & Environment Design).',
+    },
+    highlights: {
+      es: [
+        'Programación de movimiento, salto, interacción y lanzamiento de objetos, con un menú de recetas.',
+        'El equipo creó la música y los efectos de sonido; algunos efectos se grabaron con sus propias voces.',
+        'Hay una versión descargable para PC, recomendada por su rendimiento.',
+      ],
+      en: [
+        'Movement, jumping, interaction, and object-throwing controls, along with a recipe menu.',
+        'The team created the music and sound effects, including some effects recorded with their own voices.',
+        'A downloadable PC version is available and recommended for performance.',
+      ],
+    },
+  },
   '07': {
     overview: {
       es: 'Aplicación para parejas en desarrollo, enfocada en convertir la conexión cotidiana en experiencias compartidas mediante herramientas digitales.',
@@ -291,6 +324,20 @@ export const projectDetails: Record<string, ProjectDetails> = {
     role: {
       es: 'Desarrollo de videojuego',
       en: 'Game development',
+    },
+    highlights: {
+      es: [],
+      en: [],
+    },
+  },
+  '11': {
+    overview: {
+      es: 'Shooter multijugador con pantalla dividida, desarrollado en Unity.',
+      en: 'A split-screen multiplayer shooter developed in Unity.',
+    },
+    role: {
+      es: 'Desarrollo individual (en solitario). Aún no está disponible públicamente.',
+      en: 'Individually developed (solo). Not yet publicly available.',
     },
     highlights: {
       es: [],

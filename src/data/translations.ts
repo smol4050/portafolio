@@ -1,0 +1,208 @@
+
+import type { Locale } from '../types/project'
+
+export const copy = {
+  es: {
+    navAbout: 'Sobre mí',
+    navProjects: 'Proyectos',
+    navSkills: 'Habilidades',
+    navContact: 'Contacto',
+
+    heroEyebrow: 'DESARROLLO · VIDEOJUEGOS · CALIDAD',
+    heroLine1: 'Ideas que',
+    heroLine2: 'merecen',
+    heroLine3: 'cobrar vida.',
+    heroDescription:
+      'Soy Luis Stiven Méndez, estudiante de Ingeniería Multimedia. Exploro la intersección entre desarrollo de software, experiencias interactivas y calidad.',
+    explore: 'Explorar proyectos',
+    contactMe: 'Hablemos',
+    scroll: 'DESLIZA PARA EXPLORAR',
+
+    selected: '01 / TRABAJO SELECCIONADO',
+    projectsTitle: 'Mundos por construir.',
+    projectsDescription:
+      'Videojuegos, aplicaciones y experimentos digitales. Cada proyecto es una oportunidad para aprender, resolver problemas y crear algo propio.',
+    completed: 'PROYECTOS TERMINADOS',
+    inProgress: 'EN DESARROLLO',
+    viewProject: 'Explorar proyecto',
+    detailsSoon: 'DETALLES PRÓXIMAMENTE',
+
+    aboutEyebrow: '02 / DETRÁS DEL CÓDIGO',
+    aboutTitle1: 'La curiosidad',
+    aboutTitle2: 'es el comienzo.',
+    aboutLead:
+      'Me interesa cómo una idea se convierte en una experiencia que las personas pueden explorar, utilizar y recordar.',
+    aboutText:
+      'Estudio Ingeniería Multimedia en la Universidad Autónoma de Occidente. Mi experiencia práctica combina desarrollo con Flutter, programación de videojuegos y pruebas manuales de software.',
+    aboutText2:
+      'Me gusta investigar comportamientos, encontrar errores, validar funcionalidades y entender cómo los detalles afectan la experiencia final.',
+    location: 'CALI, COLOMBIA',
+    education: 'FORMACIÓN',
+    degree: 'Ingeniería Multimedia',
+    university: 'Universidad Autónoma de Occidente',
+    expected: 'Graduación prevista: noviembre de 2027',
+    languages: 'IDIOMAS',
+    spanish: 'Español · Nativo',
+    english: 'Inglés · Avanzado',
+
+    skillsEyebrow: '03 / MI CAJA DE HERRAMIENTAS',
+    skillsTitle: 'Distintas formas de crear.',
+    skillsDescription:
+      'Tecnologías y prácticas que forman parte de mi recorrido actual.',
+    development: 'Desarrollo',
+    developmentDescription:
+      'Aplicaciones, interfaces y programación de experiencias interactivas.',
+    games: 'Videojuegos',
+    gamesDescription:
+      'Desarrollo de proyectos y experimentación con mecánicas de juego.',
+    qa: 'Calidad del software',
+    qaDescription:
+      'Validación manual del comportamiento del software y detección de errores.',
+    qaTags: [
+      'Pruebas funcionales',
+      'Regresión',
+      'Integración',
+      'Multijugador',
+      'Rendimiento y estrés',
+      'Exploratorias',
+    ],
+
+    approachEyebrow: '04 / MI ENFOQUE',
+    approachTitle: 'Crear es probar. Probar es mejorar.',
+    approachDescription:
+      'El desarrollo y el control de calidad no son mundos separados. Entender cómo se construye un producto también ayuda a cuestionarlo, validarlo y mejorarlo.',
+    approachOne: 'Observar',
+    approachOneText: 'Entender el comportamiento esperado.',
+    approachTwo: 'Experimentar',
+    approachTwoText: 'Explorar escenarios y posibles fallos.',
+    approachThree: 'Validar',
+    approachThreeText: 'Comprobar resultados y comunicar hallazgos.',
+
+    contactEyebrow: '05 / EL SIGUIENTE CAPÍTULO',
+    contactTitle1: 'Hagamos algo',
+    contactTitle2: 'que valga la pena.',
+    contactDescription:
+      '¿Tienes un proyecto, una oportunidad o una idea interesante? Estoy abierto a conversar.',
+    email: 'Escríbeme',
+    footerNote: 'Diseñado y desarrollado con curiosidad.',
+    backTop: 'VOLVER ARRIBA ↑',
+
+    statusDone: 'TERMINADO',
+    statusProgress: 'EN DESARROLLO',
+    statusJam: 'GAME JAM 2026',
+
+    projectOverview: 'Descripción general',
+    projectRole: 'Participación',
+    projectHighlights: 'Aspectos destacados',
+    backToProjects: 'Volver a proyectos',
+    openExternal: 'Abrir proyecto ↗',
+    themeDark: 'Cambiar a modo oscuro',
+    themeLight: 'Cambiar a modo claro',
+    openMenu: 'Abrir menú',
+    closeMenu: 'Cerrar menú',
+    externalLinkLabel: 'Abre en una nueva pestaña',
+  },
+
+  en: {
+    navAbout: 'About',
+    navProjects: 'Projects',
+    navSkills: 'Skills',
+    navContact: 'Contact',
+
+    heroEyebrow: 'DEVELOPMENT · GAMES · QUALITY',
+    heroLine1: 'Ideas worth',
+    heroLine2: 'bringing',
+    heroLine3: 'to life.',
+    heroDescription:
+      "I'm Luis Stiven Méndez, a Multimedia Engineering student exploring the intersection of software development, interactive experiences, and quality assurance.",
+    explore: 'Explore projects',
+    contactMe: "Let's talk",
+    scroll: 'SCROLL TO EXPLORE',
+
+    selected: '01 / SELECTED WORK',
+    projectsTitle: 'Worlds waiting to be built.',
+    projectsDescription:
+      'Games, applications, and digital experiments. Every project is an opportunity to learn, solve problems, and create something of my own.',
+    completed: 'COMPLETED PROJECTS',
+    inProgress: 'IN DEVELOPMENT',
+    viewProject: 'Explore project',
+    detailsSoon: 'DETAILS COMING SOON',
+
+    aboutEyebrow: '02 / BEHIND THE CODE',
+    aboutTitle1: 'Curiosity',
+    aboutTitle2: 'is where it starts.',
+    aboutLead:
+      'I am interested in how an idea becomes an experience people can explore, use, and remember.',
+    aboutText:
+      'I study Multimedia Engineering at Universidad Autónoma de Occidente. My practical experience combines Flutter development, game programming, and manual software testing.',
+    aboutText2:
+      'I enjoy investigating behavior, finding bugs, validating functionality, and understanding how details affect the final experience.',
+    location: 'CALI, COLOMBIA',
+    education: 'EDUCATION',
+    degree: 'Multimedia Engineering',
+    university: 'Universidad Autónoma de Occidente',
+    expected: 'Expected graduation: November 2027',
+    languages: 'LANGUAGES',
+    spanish: 'Spanish · Native',
+    english: 'English · Advanced',
+
+    skillsEyebrow: '03 / MY TOOLKIT',
+    skillsTitle: 'Different ways to create.',
+    skillsDescription:
+      'Technologies and practices that are part of my current journey.',
+    development: 'Development',
+    developmentDescription:
+      'Applications, interfaces, and interactive experience programming.',
+    games: 'Game development',
+    gamesDescription:
+      'Project development and experimentation with gameplay mechanics.',
+    qa: 'Software quality',
+    qaDescription:
+      'Manual validation of software behavior and bug detection.',
+    qaTags: [
+      'Functional testing',
+      'Regression',
+      'Integration',
+      'Multiplayer',
+      'Performance & stress',
+      'Exploratory',
+    ],
+
+    approachEyebrow: '04 / MY APPROACH',
+    approachTitle: 'Build. Test. Improve.',
+    approachDescription:
+      'Development and quality assurance are not separate worlds. Understanding how a product is built also helps question, validate, and improve it.',
+    approachOne: 'Observe',
+    approachOneText: 'Understand the expected behavior.',
+    approachTwo: 'Experiment',
+    approachTwoText: 'Explore scenarios and potential failures.',
+    approachThree: 'Validate',
+    approachThreeText: 'Check results and communicate findings.',
+
+    contactEyebrow: '05 / THE NEXT CHAPTER',
+    contactTitle1: "Let's make",
+    contactTitle2: 'something worthwhile.',
+    contactDescription:
+      'Have a project, an opportunity, or an interesting idea? I am open to a conversation.',
+    email: 'Get in touch',
+    footerNote: 'Designed and developed with curiosity.',
+    backTop: 'BACK TO TOP ↑',
+
+    statusDone: 'COMPLETED',
+    statusProgress: 'IN DEVELOPMENT',
+    statusJam: 'GAME JAM 2026',
+
+    projectOverview: 'Overview',
+    projectRole: 'Contribution',
+    projectHighlights: 'Highlights',
+    backToProjects: 'Back to projects',
+    openExternal: 'Open project ↗',
+    themeDark: 'Switch to dark mode',
+    themeLight: 'Switch to light mode',
+    openMenu: 'Open menu',
+    closeMenu: 'Close menu',
+    externalLinkLabel: 'Opens in a new tab',
+  },
+} satisfies Record<Locale, object>
+
+export type Copy = (typeof copy)[Locale]

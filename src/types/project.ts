@@ -3,12 +3,13 @@ export type Locale = 'es' | 'en'
 
 export type Theme = 'dark' | 'light'
 
-export type ProjectType = 'APP' | 'GAME' | 'WEB'
+export type ProjectType = 'APP' | 'GAME' | 'WEB' | ''
 
 export type ProjectStatus =
   | 'TERMINADO'
   | 'GAME JAM 2026'
   | 'EN DESARROLLO'
+  | ''
 
 export interface Project {
   number: string
@@ -19,6 +20,7 @@ export interface Project {
   status: ProjectStatus
   type: ProjectType
   url?: string
+  draft?: boolean
 }
 
 export interface ProjectDetails {

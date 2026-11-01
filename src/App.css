@@ -133,6 +133,15 @@
   color: #fff;
 }
 
+.language-toggle button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
 .language-divider {
   color: #55475f;
 }

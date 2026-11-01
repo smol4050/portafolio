@@ -17,11 +17,12 @@ export default function ProjectsSection({
   const [selectedProject, setSelectedProject] =
     useState<Project | null>(null)
 
-  const completedProjects = projects.filter(
+  const visibleProjects = projects.filter((project) => !project.draft)
+  const completedProjects = visibleProjects.filter(
     (project) => project.status !== 'EN DESARROLLO',
   )
 
-  const inProgressProjects = projects.filter(
+  const inProgressProjects = visibleProjects.filter(
     (project) => project.status === 'EN DESARROLLO',
   )
 
@@ -67,7 +68,7 @@ export default function ProjectsSection({
         </div>
 
         <span className="projects-count">
-          {String(projects.length).padStart(2, '0')}
+          {String(visibleProjects.length).padStart(2, '0')}
           <small> PROJECTS</small>
         </span>
       </div>

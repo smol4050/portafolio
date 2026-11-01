@@ -117,6 +117,10 @@ function runVortex(center: Point, duration: number): () => void {
 export default function App() {
   const [locale, setLocale] = useState<Locale>('es');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isMobileMenu, setIsMobileMenu] = useState(
+    () => window.matchMedia('(max-width: 680px)').matches,
+  );
+  const menuToggleRef = useRef<HTMLButtonElement>(null);
 
   const [phase, setPhase] = useState<AbsorbPhase>('idle');
   const [showFlash, setShowFlash] = useState(false);
@@ -144,6 +148,27 @@ export default function App() {
     document.querySelector('meta[property="og:locale"]')?.setAttribute('content', locale === 'es' ? 'es_CO' : 'en_US');
   }, [locale, t]);
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 680px)');
+    const updateMobileMenu = (event: MediaQueryListEvent) => {
+      setIsMobileMenu(event.matches);
+      if (!event.matches) setMenuOpen(false);
+    };
+    mediaQuery.addEventListener('change', updateMobileMenu);
+    return () => mediaQuery.removeEventListener('change', updateMobileMenu);
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setMenuOpen(false);
+      menuToggleRef.current?.focus();
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [menuOpen]);
+
   const lockScroll = (lock: boolean) => {
     document.documentElement.style.overflow = lock ? 'hidden' : '';
   };
@@ -168,7 +193,6 @@ export default function App() {
   }, []);
 
   const closeMenu = () => setMenuOpen(false);
-  const toggleLocale = () => setLocale((current) => (current === 'es' ? 'en' : 'es'));
 
   const finishSequence = () => {
     if (!sequenceActiveRef.current) return;
@@ -249,28 +273,34 @@ export default function App() {
         <>
           <nav
             className={`navbar ${isAbsorbing ? 'is-absorbing-shell' : ''}`}
-            aria-label="Navegación principal"
+            aria-label={t.navMainLabel}
           >
             <a className="brand-lockup" href="#inicio" onClick={closeMenu} data-absorb>
               <BrandMark />
               <span className="brand-name">
-                smol<span>4050</span>
+                {t.brandName.slice(0, -4)}<span>{t.brandName.slice(-4)}</span>
               </span>
             </a>
 
             <button
               className="mobile-menu-toggle"
+              ref={menuToggleRef}
               type="button"
               aria-label={menuOpen ? t.closeMenu : t.openMenu}
               aria-expanded={menuOpen}
+              aria-controls="primary-navigation-links"
               onClick={() => setMenuOpen((open) => !open)}
               data-absorb
             >
-              <span />
-              <span />
+              <span aria-hidden="true" />
+              <span aria-hidden="true" />
             </button>
 
-            <div className={`nav-links ${menuOpen ? 'nav-links-open' : ''}`}>
+            <div
+              id="primary-navigation-links"
+              className={`nav-links ${menuOpen ? 'nav-links-open' : ''}`}
+              inert={isMobileMenu && !menuOpen}
+            >
               <a href="#sobre-mi" onClick={closeMenu} data-absorb>{t.navAbout}</a>
               <a href="#projects" onClick={closeMenu} data-absorb>{t.navProjects}</a>
               <a href="#skills" onClick={closeMenu} data-absorb>{t.navSkills}</a>
@@ -278,11 +308,27 @@ export default function App() {
             </div>
 
             <div className="navbar-controls">
-              <button className="language-toggle" type="button" onClick={toggleLocale} data-absorb>
-                <span className={locale === 'es' ? 'language-active' : ''}>ES</span>
-                <span className="language-divider">/</span>
-                <span className={locale === 'en' ? 'language-active' : ''}>EN</span>
-              </button>
+              <div className="language-toggle" role="group" aria-label={t.languageLabel} data-absorb>
+                <button
+                  type="button"
+                  lang="es"
+                  aria-label={t.spanishOption}
+                  aria-pressed={locale === 'es'}
+                  onClick={() => setLocale('es')}
+                >
+                  <span className={locale === 'es' ? 'language-active' : ''}>ES</span>
+                </button>
+                <span className="language-divider" aria-hidden="true">/</span>
+                <button
+                  type="button"
+                  lang="en"
+                  aria-label={t.englishOption}
+                  aria-pressed={locale === 'en'}
+                  onClick={() => setLocale('en')}
+                >
+                  <span className={locale === 'en' ? 'language-active' : ''}>EN</span>
+                </button>
+              </div>
             </div>
           </nav>
 

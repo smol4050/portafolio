@@ -18,15 +18,18 @@ const setVar = (el: HTMLElement, name: string, value: string) => {
   if (el.style.getPropertyValue(name) !== value) el.style.setProperty(name, value);
 };
 
-export default function Hero({ phase = 'idle', onEnterSimulation }: HeroProps) {
+export default function Hero({ t, phase = 'idle', onEnterSimulation }: HeroProps) {
   const heroRef = useRef<HTMLElement>(null);
   const bhRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const phaseRef = useRef<AbsorbPhase>(phase);
   const rafRef = useRef(0);
-  phaseRef.current = phase;
 
-  const gravityWord = 'STIVEN'.split('');
+  useLayoutEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+
+  const gravityWord = t.heroNameLast.split('');
   const isAbsorbing = phase !== 'idle';
 
   /**
@@ -144,8 +147,8 @@ export default function Hero({ phase = 'idle', onEnterSimulation }: HeroProps) {
 
       {/* UI Superior */}
       <div className="hero-topline" style={{ pointerEvents: 'none' }}>
-        <span data-absorb>SANTIAGO DE CALI, CO</span>
-        <span data-absorb>ENGINEERING & CREATIVE DEV</span>
+        <span data-absorb>{t.heroLocation}</span>
+        <span data-absorb>{t.heroDiscipline}</span>
       </div>
 
       {/* Contenido Principal */}
@@ -157,11 +160,11 @@ export default function Hero({ phase = 'idle', onEnterSimulation }: HeroProps) {
       >
         <div className="hero-intro" data-absorb>
           <span className="hero-indicator" />
-          <span>PORTAFOLIO // MULTIMEDIA & GAMING</span>
+          <span>{t.heroIntro}</span>
         </div>
 
         <h1 className="hero-title" ref={titleRef}>
-          <span className="title-word" data-absorb>LUIS</span>{' '}
+          <span className="title-word" data-absorb>{t.heroNameFirst}</span>{' '}
           <span className="gravity-text">
             {gravityWord.map((char, index) => (
               <span key={index} className="gravity-char" data-absorb>
@@ -172,7 +175,7 @@ export default function Hero({ phase = 'idle', onEnterSimulation }: HeroProps) {
         </h1>
 
         <p className="hero-description" data-absorb>
-          Desarrollador de software e ingeniero multimedia especializado en motores gráficos, simulación 3D interactiva y desarrollo web creativo.
+          {t.heroVisualDescription}
         </p>
 
         <div className="hero-actions">
@@ -187,12 +190,12 @@ export default function Hero({ phase = 'idle', onEnterSimulation }: HeroProps) {
             disabled={isAbsorbing}
             data-absorb
           >
-            <span>Simulación 3D</span>
+            <span>{t.heroSimulationCta}</span>
             <span>→</span>
           </button>
 
           <a href="#projects" className="button button-secondary" data-absorb>
-            Ver Proyectos
+            {t.heroProjectsCta}
           </a>
         </div>
       </div>
@@ -200,13 +203,13 @@ export default function Hero({ phase = 'idle', onEnterSimulation }: HeroProps) {
       {/* UI Inferior */}
       <div className="hero-bottomline">
         <a href="#projects" data-absorb>
-          <span>↓</span> DESPLAZAR PARA EXPLORAR
+          <span aria-hidden="true">↓</span> {t.heroScrollPrompt}
         </a>
-        <span data-absorb>SMOL4050 // 2026</span>
+        <span data-absorb>{t.heroSignature}</span>
       </div>
 
       <div className="hero-side-label" style={{ pointerEvents: 'none' }} data-absorb>
-        SISTEMAS INTERACTIVOS & GRAFICOS
+        {t.heroSideLabel}
       </div>
     </section>
   );

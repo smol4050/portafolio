@@ -141,6 +141,27 @@ export const projects: Project[] = [
     type: 'GAME',
     url: 'https://juanca25-10.github.io/SitioWebVideojuegos_Embolatados_DevBlog/',
   },
+  // Para activar un borrador, completa sus campos y elimina draft: true.
+  {
+    number: '10',
+    name: 'POR DEFINIR 1',
+    category: { es: '', en: '' },
+    description: { es: '', en: '' },
+    technologies: [],
+    status: '',
+    type: '',
+    draft: true,
+  },
+  {
+    number: '11',
+    name: 'POR DEFINIR 2',
+    category: { es: '', en: '' },
+    description: { es: '', en: '' },
+    technologies: [],
+    status: '',
+    type: '',
+    draft: true,
+  },
 ]
 
 export const projectDetails: Record<string, ProjectDetails> = {

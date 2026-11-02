@@ -1,14 +1,14 @@
 .hero-content {
-  animation: hero-enter 850ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: hero-enter 850ms var(--ease-enter) both;
 }
 
 .hero-backdrop {
-  animation: atmosphere-breathe 16s ease-in-out infinite alternate;
+  animation: atmosphere-breathe 16s var(--ease-inout) infinite alternate;
 }
 
 .hero-bottomline a span {
   display: inline-block;
-  animation: arrow-float 1.8s ease-in-out infinite;
+  animation: arrow-float 1.8s var(--ease-inout) infinite;
 }
 
 .project-card,
@@ -19,8 +19,8 @@
 .back-top,
 .theme-toggle {
   transition:
-    color 200ms ease,
-    background-color 200ms ease,
+    color var(--duration-base) ease,
+    background-color var(--duration-base) ease,
     border-color 260ms ease,
     box-shadow 260ms ease,
     transform 260ms ease;
@@ -42,7 +42,7 @@
 }
 
 .black-hole {
-  animation: black-hole-float 12s ease-in-out infinite alternate;
+  animation: black-hole-float 12s var(--ease-inout) infinite alternate;
 }
 
 .black-hole canvas {
@@ -132,10 +132,10 @@
 .singularity-flash {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: var(--z-modal);
   background: radial-gradient(
     circle at center,
-    #ffffff 0%,
+    var(--color-white-cold) 0%,
     #fff1e0 18%,
     #e9c9ff 38%,
     #9a3de0 66%,
@@ -143,10 +143,10 @@
   );
   opacity: 0;
   pointer-events: none;
-  transition: opacity 450ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 450ms var(--ease-enter);
 }
 
 .singularity-flash.active {
   opacity: 1;
-  transition: opacity 160ms cubic-bezier(0.7, 0, 0.84, 0);
+  transition: opacity 160ms var(--ease-implode);
 }

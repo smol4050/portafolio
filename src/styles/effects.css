@@ -7,12 +7,12 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background: #100719;
+  background: var(--color-surface-3);
 }
 
 .hero-backdrop {
   position: absolute;
-  z-index: 0;
+  z-index: var(--z-background);
   inset: 0;
   overflow: hidden;
   pointer-events: none;
@@ -35,22 +35,22 @@
     ),
     linear-gradient(
       118deg,
-      #100719 0%,
-      #1c0d2c 43%,
-      #260b37 70%,
-      #100817 100%
+      var(--color-surface-3) 0%,
+      var(--color-surface-gradient-mid) 43%,
+      var(--color-surface-gradient-deep) 70%,
+      var(--color-surface-gradient-end) 100%
     );
 }
 
 .hero-backdrop::before {
   position: absolute;
-  z-index: 1;
+  z-index: var(--z-content);
   inset: -20%;
   background: repeating-linear-gradient(
     113deg,
     transparent 0,
     transparent 90px,
-    rgba(230, 199, 255, 0.022) 91px,
+    var(--color-violet-grain) 91px,
     transparent 92px
   );
   content: '';
@@ -60,10 +60,10 @@
 
 .hero-backdrop::after {
   position: absolute;
-  z-index: 1;
+  z-index: var(--z-content);
   inset: 0;
   background-image: radial-gradient(
-    rgba(255, 255, 255, 0.34) 0.55px,
+    var(--color-white-dots) 0.55px,
     transparent 0.8px
   );
   background-size: 5px 5px;
@@ -74,16 +74,16 @@
 
 .hero-horizon {
   position: absolute;
-  z-index: 1;
+  z-index: var(--z-content);
   right: -8%;
   bottom: 9%;
   left: -8%;
   height: 37%;
-  border-top: 1px solid rgba(230, 183, 255, 0.2);
+  border-top: 1px solid var(--color-violet-border-warm);
   background: linear-gradient(
     0deg,
-    rgba(10, 5, 16, 0.96),
-    rgba(55, 17, 73, 0.19) 58%,
+    var(--color-overlay-bottom),
+    var(--color-overlay-purple) 58%,
     transparent
   );
   transform: perspective(400px) rotateX(48deg);
@@ -93,16 +93,16 @@
 
 .hero-grid {
   position: absolute;
-  z-index: 1;
+  z-index: var(--z-content);
   right: -20%;
   bottom: -36%;
   left: -20%;
   height: 65%;
   background-image:
-    linear-gradient(rgba(210, 152, 255, 0.16) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(210, 152, 255, 0.16) 1px, transparent 1px);
+    linear-gradient(var(--color-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grid-line) 1px, transparent 1px);
   background-size: 68px 48px;
-  mask-image: linear-gradient(to top, #000, transparent 87%);
+  mask-image: linear-gradient(to top, var(--color-black), transparent 87%);
   transform: perspective(310px) rotateX(55deg);
   transform-origin: top;
   opacity: 0.48;
@@ -111,20 +111,20 @@
 
 .hero-vignette {
   position: absolute;
-  z-index: 2;
+  z-index: var(--z-overlay-content);
   inset: 0;
   background:
     linear-gradient(
       90deg,
-      rgba(9, 5, 15, 0.78) 0%,
-      rgba(10, 5, 16, 0.35) 49%,
+      var(--color-overlay-dark) 0%,
+      var(--color-overlay-mid) 49%,
       transparent 100%
     ),
     linear-gradient(
       0deg,
-      rgba(9, 7, 14, 0.88) 0%,
+      var(--color-navigation-overlay) 0%,
       transparent 30%,
-      rgba(9, 7, 14, 0.2) 100%
+      var(--color-navigation-edge) 100%
     );
   pointer-events: none;
 }
@@ -136,7 +136,7 @@
 .hero-bottomline,
 .hero-side-label {
   position: relative;
-  z-index: 3;
+  z-index: var(--z-floating);
 }
 
 /* =========================================================
@@ -163,42 +163,39 @@
       rgba(var(--card-accent-rgb), 0.17),
       transparent 48%
     ),
-    linear-gradient(135deg, #21152d, #0d0b14 75%);
+    linear-gradient(135deg, var(--color-surface-gradient-card), var(--color-surface-5) 75%);
 }
 
 .project-art::before {
   position: absolute;
-  z-index: -1;
+  z-index: var(--z-behind);
   inset: 0;
   background-image:
     linear-gradient(
-      rgba(239, 219, 255, 0.065) 1px,
+      var(--color-grid-fine) 1px,
       transparent 1px
     ),
     linear-gradient(
       90deg,
-      rgba(239, 219, 255, 0.065) 1px,
+      var(--color-grid-fine) 1px,
       transparent 1px
     );
   background-size: 31px 31px;
   content: '';
-  mask-image: linear-gradient(135deg, #000, transparent 80%);
+  mask-image: linear-gradient(135deg, var(--color-black), transparent 80%);
   opacity: 0.8;
 }
 
 .project-art::after {
   position: absolute;
-  z-index: -1;
+  z-index: var(--z-behind);
   right: -14%;
   bottom: -95%;
   width: 100%;
   aspect-ratio: 1;
   border: 1px solid rgba(var(--card-accent-rgb), 0.52);
-  border-radius: 50%;
-  box-shadow:
-    0 0 0 23px rgba(var(--card-accent-rgb), 0.04),
-    0 0 0 48px rgba(var(--card-accent-rgb), 0.035),
-    0 0 0 76px rgba(var(--card-accent-rgb), 0.025);
+  border-radius: var(--radius-circle);
+  box-shadow: var(--shadow-card-outline);
   content: '';
   transition: transform 450ms ease;
 }
@@ -209,18 +206,18 @@
 
 .project-art-number,
 .project-art-type {
-  color: rgba(255, 255, 255, 0.77);
-  font-family: var(--display);
-  font-size: 0.85rem;
+  color: var(--color-white-muted);
+  font-family: var(--font-display);
+  font-size: var(--font-size-reading);
   letter-spacing: 0.13em;
 }
 
 .project-art-type {
   padding: 6px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  font-family: var(--body);
+  border: 1px solid var(--color-white-border);
+  font-family: var(--font-body);
   font-size: 0.56rem;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--tracking-label);
 }
 
 .project-art-orbit {
@@ -230,8 +227,8 @@
   width: 105px;
   aspect-ratio: 1;
   border: 1px solid rgba(var(--card-accent-rgb), 0.55);
-  border-radius: 50%;
-  box-shadow: 0 0 45px rgba(var(--card-accent-rgb), 0.14);
+  border-radius: var(--radius-circle);
+  box-shadow: var(--glow-card-soft);
 }
 
 .project-art-orbit::before,
@@ -239,14 +236,14 @@
   position: absolute;
   inset: 14%;
   border: 1px solid rgba(var(--card-accent-rgb), 0.35);
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   content: '';
 }
 
 .project-art-orbit::after {
   inset: 31%;
   background: rgba(var(--card-accent-rgb), 0.12);
-  box-shadow: 0 0 28px rgba(var(--card-accent-rgb), 0.35);
+  box-shadow: var(--glow-card);
 }
 
 .project-art-shape {
@@ -274,7 +271,7 @@
 .project-card-04 .project-art-orbit,
 .project-card-07 .project-art-orbit {
   width: 135px;
-  border-radius: 2px;
+  border-radius: var(--radius-small);
   transform: rotate(45deg);
 }
 
@@ -334,7 +331,7 @@
 }
 
 :root[data-theme='light'] .project-art {
-  color: #fff;
+  color: var(--color-white-cold);
 }
 
 @media (max-width: 680px) {

@@ -1,25 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
-
 :root {
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-body);
   font-optical-sizing: auto;
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --bg: #09070e;
-  --bg-soft: #100b19;
-  --panel: #151020;
-  --white: #f5f0ff;
-  --muted: #a49aaf;
-  --purple: #a855f7;
-  --purple-light: #d7a8ff;
-  --line: rgba(235, 219, 255, 0.12);
-
-  --display: 'Barlow Condensed', Impact, sans-serif;
-  --body: 'DM Sans', sans-serif;
+  --bg: var(--color-background);
+  --bg-soft: var(--color-surface-1);
+  --panel: var(--color-surface-2);
+  --white: var(--color-text-primary);
+  --muted: var(--color-text-secondary);
+  --purple: var(--color-violet-500);
+  --purple-light: var(--color-violet-300);
+  --line: var(--color-border-soft);
 
   color: var(--white);
   background: var(--bg);
@@ -60,7 +55,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--white);
-  font-family: var(--body);
+  font-family: var(--font-body);
 }
 
 button,
@@ -95,7 +90,7 @@ select:focus-visible {
 }
 
 ::selection {
-  color: #fff;
+  color: var(--color-white-cold);
   background: #7839bd;
 }
 
@@ -129,7 +124,7 @@ select:focus-visible {
   margin: 0;
   color: var(--purple-light);
   font-size: 0.7rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.19em;
   line-height: 1.6;
 }
@@ -139,9 +134,9 @@ select:focus-visible {
 .approach-heading h2,
 .contact-inner h2 {
   margin: 20px 0 0;
-  font-family: var(--display);
+  font-family: var(--font-display);
   font-size: clamp(3.4rem, 7vw, 6.8rem);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: -0.035em;
   line-height: 0.91;
   text-transform: uppercase;
@@ -158,7 +153,7 @@ select:focus-visible {
   margin: 22px 0 0;
   color: var(--muted);
   font-size: 0.96rem;
-  line-height: 1.9;
+  line-height: var(--line-height-reading);
 }
 
 @media (max-width: 1000px) {
@@ -192,8 +187,8 @@ select:focus-visible {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
+    animation-duration: var(--duration-reduced) !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: var(--duration-reduced) !important;
   }
 }

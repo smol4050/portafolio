@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
-import GargantuaSimulation from '../components/GargantuaSimulation';
-import type { AbsorbPhase } from '../components/GargantuaSimulation';
+import type { AbsorbPhase } from '../simulation/config';
+import { HeroSimulation } from '../simulation/SimulationLoader';
 import type { copy } from '../data/translations';
 
 interface HeroProps {
@@ -137,7 +137,7 @@ export default function Hero({ t, phase = 'idle', onEnterSimulation }: HeroProps
       {/* 2. Canvas WebGL 3D en segundo plano (su centro = centro del agujero negro) */}
       <div ref={bhRef} className={canvasClass}>
         {/* Embebido: cámara fija en órbita, sin zoom por rueda (no secuestra el scroll de la página) */}
-        <GargantuaSimulation embedded={true} absorbPhase={phase} />
+        <HeroSimulation phase={phase} />
       </div>
 
       {/* 3. Superposiciones ópticas */}

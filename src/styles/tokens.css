@@ -1,0 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Paleta existente: fondo, superficies, texto y acentos del sitio. */
+  --color-background: #09070e;
+  --color-surface-1: #100b19;
+  --color-surface-2: #151020;
+  --color-surface-3: #100719;
+  --color-surface-4: #05030a;
+  --color-surface-5: #0d0b14;
+  --color-text-primary: #f5f0ff;
+  --color-text-secondary: #a49aaf;
+  --color-white-cold: #fff;
+  --color-black: #000;
+  --color-violet-pale: #f3e8ff;
+  --color-violet-500: #a855f7;
+  --color-violet-400: #c084fc;
+  --color-violet-350: #a78bfa;
+  --color-violet-300: #d7a8ff;
+  --color-violet-200: #e9d5ff;
+  --color-violet-soft: #ddd6fe;
+  --color-violet-mid: #bd73f4;
+  --color-violet-muted: #c68cff;
+  --color-violet-light: #c58bff;
+  --color-violet-bright: #e4c4ff;
+  --color-violet-gradient-pink: #ef9bda;
+  --color-state-error: #f17cbb;
+  --color-state-success: #80e1ca;
+  --color-state-warning: #f4b778;
+  --color-blue-soft: #90a6ff;
+  --color-surface-gradient-deep: #260b37;
+  --color-surface-gradient-card: #21152d;
+  --color-surface-gradient-mid: #1c0d2c;
+  --color-surface-gradient-end: #100817;
+  --color-border-soft: rgba(235, 219, 255, 0.12);
+  --color-border-violet: rgba(168, 85, 247, 0.2);
+  --color-border-violet-strong: rgba(168, 85, 247, 0.35);
+  --color-violet-border-strong: rgba(236, 207, 255, 0.8);
+  --color-violet-border-warm: rgba(230, 183, 255, 0.2);
+  --color-violet-wash: rgba(168, 85, 247, 0.4);
+  --color-violet-haze: rgba(168, 85, 247, 0.25);
+  --color-violet-grain: rgba(230, 199, 255, 0.022);
+  --color-grid-line: rgba(210, 152, 255, 0.16);
+  --color-grid-fine: rgba(239, 219, 255, 0.065);
+  --color-navigation-overlay: rgba(9, 7, 14, 0.88);
+  --color-navigation-edge: rgba(9, 7, 14, 0.2);
+  --color-overlay-dark: rgba(9, 5, 15, 0.78);
+  --color-overlay-purple: rgba(55, 17, 73, 0.19);
+  --color-overlay-bottom: rgba(10, 5, 16, 0.96);
+  --color-overlay-mid: rgba(10, 5, 16, 0.35);
+  --color-panel-overlay: rgba(25, 12, 48, 0.6);
+  --color-white-muted: rgba(255, 255, 255, 0.77);
+  --color-white-dots: rgba(255, 255, 255, 0.34);
+  --color-white-border: rgba(255, 255, 255, 0.15);
+  --color-slider-glow: rgba(192, 132, 252, 0.8);
+  --color-black-shadow: rgba(0, 0, 0, 0.8);
+
+  /* Pilas ya usadas; IBM Plex Mono se aplica al único texto monospace existente. */
+  --font-display: 'Barlow Condensed', Impact, sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  /* Escala tipográfica basada en medidas actuales. */
+  --font-size-micro: 0.55rem;
+  --font-size-caption: 0.65rem;
+  --font-size-small: 0.72rem;
+  --font-size-reading: 0.85rem;
+  --font-size-body: 1rem;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-heavy: 800;
+  --line-height-body: 1.8;
+  --line-height-reading: 1.9;
+  --tracking-label: 0.12em;
+  --tracking-display: -0.045em;
+
+  /* Espaciado recurrente en CSS y controles. */
+  --space-2: 8px;
+  --space-3: 10px;
+  --space-4: 12px;
+  --space-5: 14px;
+  --space-6: 20px;
+
+  /* Radios y elevación repetidos. */
+  --radius-circle: 50%;
+  --radius-pill: 9999px;
+  --radius-small: 2px;
+  --radius-card: 4px;
+  --shadow-card-outline: 0 0 0 23px rgba(var(--card-accent-rgb), 0.04), 0 0 0 48px rgba(var(--card-accent-rgb), 0.035), 0 0 0 76px rgba(var(--card-accent-rgb), 0.025);
+  --glow-card: 0 0 28px rgba(var(--card-accent-rgb), 0.35);
+  --glow-card-soft: 0 0 45px rgba(var(--card-accent-rgb), 0.14);
+
+  /* Capas: conservar los niveles actuales y hacer explícito su propósito. */
+  --z-behind: -1;
+  --z-background: 0;
+  --z-content: 1;
+  --z-overlay-content: 2;
+  --z-floating: 3;
+  --z-sticky: 10;
+  --z-fullscreen: 50;
+  --z-simulation-controls: 100;
+  --z-navigation: 1000;
+  --z-modal: 9999;
+
+  /* Movimiento. Las curvas especiales conservan exactamente los valores usados. */
+  --ease-in: ease-in;
+  --ease-out: ease-out;
+  --ease-inout: ease-in-out;
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-implode: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-overload: cubic-bezier(0.3, 0, 0.6, 1);
+  --duration-fast: 180ms;
+  --duration-base: 200ms;
+  --duration-moderate: 300ms;
+  --duration-slow: 600ms;
+  --duration-reduced: 0.01ms;
+
+  /* Breakpoints vigentes: 1500, 1001, 1000, 680 y 390 px. */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: var(--duration-reduced);
+    --duration-base: var(--duration-reduced);
+    --duration-moderate: var(--duration-reduced);
+    --duration-slow: var(--duration-reduced);
+  }
+}

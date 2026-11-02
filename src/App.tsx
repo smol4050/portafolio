@@ -9,8 +9,8 @@ import AboutSection from './sections/AboutSection';
 import SkillsSection from './sections/SkillsSection';
 import ApproachSection from './sections/ApproachSection';
 import ContactSection from './sections/ContactSection';
-import GargantuaSimulation from './components/GargantuaSimulation';
-import type { AbsorbPhase } from './components/GargantuaSimulation';
+import { FullscreenSimulation } from './simulation/SimulationLoader';
+import type { AbsorbPhase } from './simulation/config';
 
 import './styles/base.css';
 import './styles/effects.css';
@@ -268,7 +268,7 @@ export default function App() {
       <div className={`singularity-flash ${showFlash ? 'active' : ''}`} />
 
       {simulationActive ? (
-        <GargantuaSimulation onClose={handleExitSimulation} onReady={handleSimReady} />
+        <FullscreenSimulation onClose={handleExitSimulation} onReady={handleSimReady} />
       ) : (
         <>
           <nav

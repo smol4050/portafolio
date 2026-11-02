@@ -199,6 +199,26 @@
   z-index: var(--z-simulation-controls);
 }
 
+@media (max-width: 680px) {
+  .gargantua-sim-header {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+  }
+
+  .gargantua-sim-header > div:first-child,
+  .gargantua-sim-header > div:last-child {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .gargantua-sim-header > div:last-child {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+}
+
 .gargantua-sim-btn {
   display: inline-flex;
   align-items: center;

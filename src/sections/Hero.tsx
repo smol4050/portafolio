@@ -2,11 +2,16 @@ import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import type { AbsorbPhase } from '../simulation/config';
 import { HeroSimulation } from '../simulation/SimulationLoader';
 import type { copy } from '../data/translations';
+import type { ExperienceProfile } from '../experience/profiles';
 
 interface HeroProps {
   t: typeof copy['es'];
   phase?: AbsorbPhase;
   onEnterSimulation?: () => void;
+  showSimulation: boolean;
+  profile: ExperienceProfile;
+  onSimulationReady: () => void;
+  onFps: (fps: number) => void;
 }
 
 // Radio aparente de la sombra (≈ 2.6 rs) respecto a la mitad del alto del canvas,
@@ -18,7 +23,7 @@ const setVar = (el: HTMLElement, name: string, value: string) => {
   if (el.style.getPropertyValue(name) !== value) el.style.setProperty(name, value);
 };
 
-export default function Hero({ t, phase = 'idle', onEnterSimulation }: HeroProps) {
+export default function Hero({ t, phase = 'idle', onEnterSimulation, showSimulation, profile, onSimulationReady, onFps }: HeroProps) {
   const heroRef = useRef<HTMLElement>(null);
   const bhRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -137,7 +142,7 @@ export default function Hero({ t, phase = 'idle', onEnterSimulation }: HeroProps
       {/* 2. Canvas WebGL 3D en segundo plano (su centro = centro del agujero negro) */}
       <div ref={bhRef} className={canvasClass}>
         {/* Embebido: cámara fija en órbita, sin zoom por rueda (no secuestra el scroll de la página) */}
-        <HeroSimulation phase={phase} />
+        {showSimulation && <HeroSimulation phase={phase} profile={profile} onReady={onSimulationReady} onFps={onFps} />}
       </div>
 
       {/* 3. Superposiciones ópticas */}

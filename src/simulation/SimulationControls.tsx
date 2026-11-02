@@ -3,11 +3,12 @@ import {
   Aperture, ArrowLeft, BookOpen, Camera, Compass, Download, Eye, Maximize2,
   Pause, Play, RotateCcw, Sliders, Sparkles, Volume2, VolumeX, X
 } from 'lucide-react';
-import { QUALITY, type CameraPresetKey, type QualityKey, type SimulationSettings } from './config';
+import { QUALITY, QUALITY_ORDER, type CameraPresetKey, type QualityKey, type SimulationSettings } from './config';
 
 interface SimulationControlsProps {
   sim: SimulationSettings;
   quality: QualityKey;
+  qualityCeiling: QualityKey;
   paused: boolean;
   audioPlaying: boolean;
   activePreset: CameraPresetKey;
@@ -57,7 +58,7 @@ function Slider({ label, value, min, max, step, onChange, format }: SliderProps)
 }
 
 export default function SimulationControls({
-  sim, quality, paused, audioPlaying, activePreset, fps, timeDilation,
+  sim, quality, qualityCeiling, paused, audioPlaying, activePreset, fps, timeDilation,
   onClose, onPause, onAudioToggle, onCapture, onReset, onUpdate, onQualityChange, onPresetChange
 }: SimulationControlsProps) {
   const [activeTab, setActiveTab] = useState<'physics' | 'optics' | 'presets'>('physics');
@@ -159,7 +160,7 @@ export default function SimulationControls({
             <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--color-border-violet)' }}>
               <div style={{ fontSize: '0.75rem', marginBottom: '0.4rem', color: 'var(--color-violet-soft)' }}>Calidad de Renderizado ({fps} FPS)</div>
               <div className="gargantua-quality-grid">
-                {Object.entries(QUALITY).map(([key, q]) => (
+                {Object.entries(QUALITY).filter(([key]) => QUALITY_ORDER.indexOf(key as QualityKey) <= QUALITY_ORDER.indexOf(qualityCeiling)).map(([key, q]) => (
                   <button
                     key={key}
                     type="button"

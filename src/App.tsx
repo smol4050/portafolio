@@ -11,6 +11,10 @@ import ApproachSection from './sections/ApproachSection';
 import ContactSection from './sections/ContactSection';
 import { FullscreenSimulation } from './simulation/SimulationLoader';
 import type { AbsorbPhase } from './simulation/config';
+import { ExperienceProvider } from './experience/ExperienceProvider';
+import { useExperience } from './experience/useExperience';
+import ExperienceSelector from './experience/ExperienceSelector';
+import { EXPERIENCE_PROFILES } from './experience/profiles';
 
 import './styles/base.css';
 import './styles/effects.css';
@@ -31,6 +35,10 @@ const T_OVERLOAD_END = 1300;
 const T_SWAP_SIM = 1480; // el destello ya cubre la pantalla
 const T_END = 1600;          // el destello NO se disipa antes de este instante...
 const T_READY_TIMEOUT = 2200; // ...ni después de esto, aunque el shader tarde en compilar
+
+function lockScroll(lock: boolean) {
+  document.documentElement.style.overflow = lock ? 'hidden' : '';
+}
 
 interface Point { x: number; y: number }
 
@@ -114,7 +122,12 @@ function runVortex(center: Point, duration: number): () => void {
   return () => cancelAnimationFrame(raf);
 }
 
-export default function App() {
+function PortfolioApp() {
+  const {
+    mode: experienceMode, tier: experienceTier, profile: experienceProfile,
+    webglAvailable, adjustment, setMode: setExperienceMode,
+    simulationReady, reportFps, tierWasReducedAutomatically,
+  } = useExperience();
   const [locale, setLocale] = useState<Locale>('es');
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobileMenu, setIsMobileMenu] = useState(
@@ -125,6 +138,7 @@ export default function App() {
   const [phase, setPhase] = useState<AbsorbPhase>('idle');
   const [showFlash, setShowFlash] = useState(false);
   const [simulationActive, setSimulationActive] = useState(false);
+  const [experienceNotice, setExperienceNotice] = useState('');
 
   const timersRef = useRef<number[]>([]);
   const stopVortexRef = useRef<(() => void) | null>(null);
@@ -149,6 +163,12 @@ export default function App() {
   }, [locale, t]);
 
   useEffect(() => {
+    if (!experienceNotice) return;
+    const timeout = window.setTimeout(() => setExperienceNotice(''), 4500);
+    return () => window.clearTimeout(timeout);
+  }, [experienceNotice]);
+
+  useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 680px)');
     const updateMobileMenu = (event: MediaQueryListEvent) => {
       setIsMobileMenu(event.matches);
@@ -168,10 +188,6 @@ export default function App() {
     window.addEventListener('keydown', closeOnEscape);
     return () => window.removeEventListener('keydown', closeOnEscape);
   }, [menuOpen]);
-
-  const lockScroll = (lock: boolean) => {
-    document.documentElement.style.overflow = lock ? 'hidden' : '';
-  };
 
   const clearSequence = () => {
     sequenceActiveRef.current = false;
@@ -194,23 +210,31 @@ export default function App() {
 
   const closeMenu = () => setMenuOpen(false);
 
-  const finishSequence = () => {
+  const finishSequence = useCallback(() => {
     if (!sequenceActiveRef.current) return;
     if (!(minTimeDoneRef.current && simReadyRef.current)) return;
     sequenceActiveRef.current = false;
     setShowFlash(false);
     lockScroll(false);
-  };
+  }, []);
 
   const handleSimReady = useCallback(() => {
     simReadyRef.current = true;
     finishSequence();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    simulationReady();
+  }, [finishSequence, simulationReady]);
+
+  const handleHeroReady = useCallback(() => simulationReady(), [simulationReady]);
 
   const handleStartAbsorption = () => {
     if (phase !== 'idle') return;
     closeMenu();
+    if (!webglAvailable) {
+      setExperienceNotice(t.experienceNoWebgl);
+      return;
+    }
+    if (experienceTier === 'minimal') setExperienceNotice(t.experienceMinimalFullscreen);
+    else setExperienceNotice('');
 
     // Fijar el hero en pantalla: las coordenadas del vórtice se miden una sola vez
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
@@ -267,8 +291,24 @@ export default function App() {
     <main className={`portfolio locale-${locale} theme-dark ${isAbsorbing ? 'is-absorbing' : ''}`}>
       <div className={`singularity-flash ${showFlash ? 'active' : ''}`} />
 
+      {(experienceNotice || adjustment) && (
+        <div className="experience-status" role="status" aria-live="polite">
+          {experienceNotice || t.experienceAdjusted.replace('{tier}', t[`experienceTier_${adjustment}` as keyof typeof t] as string)}
+          {adjustment && (
+            <button type="button" onClick={() => { setExperienceMode(adjustment); setExperienceNotice(''); }}>
+              {t.experienceUseManually}
+            </button>
+          )}
+        </div>
+      )}
+
       {simulationActive ? (
-        <FullscreenSimulation onClose={handleExitSimulation} onReady={handleSimReady} />
+        <FullscreenSimulation
+          onClose={handleExitSimulation}
+          onReady={handleSimReady}
+          onFps={reportFps}
+          profile={experienceTier === 'minimal' ? EXPERIENCE_PROFILES.cinematic : experienceProfile}
+        />
       ) : (
         <>
           <nav
@@ -305,9 +345,25 @@ export default function App() {
               <a href="#projects" onClick={closeMenu} data-absorb>{t.navProjects}</a>
               <a href="#skills" onClick={closeMenu} data-absorb>{t.navSkills}</a>
               <a href="#contact" onClick={closeMenu} data-absorb>{t.navContact}</a>
+              <ExperienceSelector
+                variant="mobile"
+                mode={experienceMode}
+                tier={experienceTier}
+                setMode={setExperienceMode}
+                labels={t}
+                automaticallyReduced={tierWasReducedAutomatically}
+              />
             </div>
 
             <div className="navbar-controls">
+              <ExperienceSelector
+                variant="desktop"
+                mode={experienceMode}
+                tier={experienceTier}
+                setMode={setExperienceMode}
+                labels={t}
+                automaticallyReduced={tierWasReducedAutomatically}
+              />
               <div className="language-toggle" role="group" aria-label={t.languageLabel} data-absorb>
                 <button
                   type="button"
@@ -336,6 +392,10 @@ export default function App() {
             t={t}
             phase={phase}
             onEnterSimulation={handleStartAbsorption}
+            showSimulation={experienceTier !== 'minimal'}
+            profile={experienceProfile}
+            onSimulationReady={handleHeroReady}
+            onFps={reportFps}
           />
 
           <ProjectsSection locale={locale} t={t} />
@@ -346,5 +406,13 @@ export default function App() {
         </>
       )}
     </main>
+  );
+}
+
+export default function App() {
+  return (
+    <ExperienceProvider>
+      <PortfolioApp />
+    </ExperienceProvider>
   );
 }

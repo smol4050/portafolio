@@ -1,21 +1,23 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, type RefObject } from 'react';
 import * as THREE from 'three';
 import { compositeFS, quadVS, rayFS } from './shaders';
-import { CAMERA_PRESETS, DEFAULTS, deriveGeometry, PHASE_BOOST, QUALITY, QUALITY_ORDER, wrapPi, type CameraPresetKey, type QualityKey, type RenderParameters } from './config';
+import { CAMERA_PRESETS, DEFAULTS, deriveGeometry, PHASE_BOOST, QUALITY, wrapPi, type CameraPresetKey, type QualityKey, type RenderParameters } from './config';
+import type { ExperienceProfile } from '../experience/profiles';
 
 interface RendererOptions {
   mountRef: RefObject<HTMLDivElement | null>;
   embedded: boolean;
   params: RenderParameters;
+  profile: ExperienceProfile;
   onReady?: () => void;
   onFps?: (fps: number) => void;
-  onQualityChange: (quality: QualityKey) => void;
   onContextStatus: (available: boolean) => void;
 }
 
-export function useGargantuaRenderer({ mountRef, embedded, params, onReady, onFps, onQualityChange, onContextStatus }: RendererOptions) {
+export function useGargantuaRenderer({ mountRef, embedded, params, profile, onReady, onFps, onContextStatus }: RendererOptions) {
   const isVisibleRef = useRef(true);
   const paramsRef = useRef(params);
+  const profileRef = useRef(profile);
   const onReadyRef = useRef(onReady);
   const syncLoopRef = useRef<() => void>(() => {});
   const camTargetRef = useRef({ ...CAMERA_PRESETS.orbit });
@@ -25,8 +27,9 @@ export function useGargantuaRenderer({ mountRef, embedded, params, onReady, onFp
 
   useLayoutEffect(() => {
     paramsRef.current = params;
+    profileRef.current = profile;
     syncLoopRef.current();
-  }, [params]);
+  }, [params, profile]);
   useLayoutEffect(() => { onReadyRef.current = onReady; }, [onReady]);
 
   const applyPreset = useCallback((key: CameraPresetKey) => {
@@ -55,8 +58,7 @@ export function useGargantuaRenderer({ mountRef, embedded, params, onReady, onFp
       return;
     }
 
-    // Hasta 2.0x en pantalla completa (1.5x en el hero) para bordes hipernítidos
-    const dpr = Math.min(window.devicePixelRatio || 1, embedded ? 1.5 : 2.0);
+    let dpr = Math.min(window.devicePixelRatio || 1, embedded ? profileRef.current.heroMaxDpr : profileRef.current.fullscreenMaxDpr);
     renderer.setPixelRatio(dpr);
     renderer.setSize(container.clientWidth || 300, container.clientHeight || 300);
     renderer.setClearColor(0x000000, 0);
@@ -135,14 +137,12 @@ export function useGargantuaRenderer({ mountRef, embedded, params, onReady, onFp
     // Resolución del render-target = tamaño físico (CSS × dpr) × escala de calidad,
     // limitada por un presupuesto de píxeles. perfScale es el último recurso anti-cuelgue.
     let currentQuality: QualityKey = paramsRef.current.quality;
-    let perfScale = 1;
-    let perfDirty = false;
     const computeRT = () => {
       const cw = container.clientWidth || 300;
       const ch = container.clientHeight || 300;
       const q = QUALITY[currentQuality];
       const budget = q.maxPixels * (embedded ? 0.6 : 1);
-      const sc = Math.min(q.scale * dpr * perfScale, Math.sqrt(budget / (cw * ch)));
+      const sc = Math.min(q.scale * dpr, Math.sqrt(budget / (cw * ch)));
       return { cw, ch, w: Math.max(1, Math.floor(cw * sc)), h: Math.max(1, Math.floor(ch * sc)) };
     };
     let { w, h } = computeRT();
@@ -150,7 +150,6 @@ export function useGargantuaRenderer({ mountRef, embedded, params, onReady, onFp
     // Estado de seguridad del ciclo de vida
     let disposed = false;
     let failed = false;
-    let lastDowngrade = 0;
 
     // Si el shader no compila, se detiene el bucle en vez de dejar la GPU colgada
     renderer.debug.onShaderError = () => {
@@ -312,9 +311,12 @@ export function useGargantuaRenderer({ mountRef, embedded, params, onReady, onFp
       simTime += dt;
 
       // Cambio de calidad en caliente (sin recrear el renderer)
-      if (P.quality !== currentQuality || perfDirty) {
+      const activeProfile = profileRef.current;
+      const nextDpr = Math.min(window.devicePixelRatio || 1, embedded ? activeProfile.heroMaxDpr : activeProfile.fullscreenMaxDpr);
+      if (P.quality !== currentQuality || nextDpr !== dpr) {
         currentQuality = P.quality as QualityKey;
-        perfDirty = false;
+        dpr = nextDpr;
+        renderer.setPixelRatio(dpr);
         onResize();
       }
 
@@ -330,7 +332,7 @@ export function useGargantuaRenderer({ mountRef, embedded, params, onReady, onFp
       const now = performance.now();
 
       const autoOrbit = P.activePreset === 'orbit' && now - inter.last > 2000;
-      if (!inter.dragging && (boost > 0.05 || autoOrbit)) {
+      if (!inter.dragging && (boost > 0.05 || (autoOrbit && activeProfile.autoRotate))) {
         tgt.theta += dt * (0.1 + 1.7 * boost);
       }
 
@@ -375,7 +377,7 @@ export function useGargantuaRenderer({ mountRef, embedded, params, onReady, onFp
       U.u_maxSteps.value = QUALITY[P.quality as QualityKey].steps;
 
       compMat.uniforms.u_exposure.value = P.exposure * (1 + 0.4 * boost);
-      compMat.uniforms.u_bloom.value = P.bloom * (1 + 0.8 * boost);
+      compMat.uniforms.u_bloom.value = P.bloom * activeProfile.bloomScale * (1 + 0.8 * boost);
 
       pass(rayMat, rtScene);
       compMat.uniforms.tScene.value = rtScene.texture;
@@ -408,23 +410,10 @@ export function useGargantuaRenderer({ mountRef, embedded, params, onReady, onFp
       if (t - fpsLast >= 1000) {
         const measured = Math.round((fpsFrames * 1000) / (t - fpsLast));
         const stalled = t - fpsLast > 2000; // pestaña en segundo plano, etc.
-        if (!embedded) onFps?.(measured);
         fpsFrames = 0;
         fpsLast = t;
 
-        // Calidad adaptativa: si va lento, baja un nivel (nunca sube, sin oscilaciones)
-        if (!stalled && !P.paused && measured < (P.quality === 'low' ? 15 : 22) && t - lastDowngrade > 2500) {
-          const idx = QUALITY_ORDER.indexOf(P.quality as QualityKey);
-          if (idx > 0) {
-            lastDowngrade = t;
-            onQualityChange(QUALITY_ORDER[idx - 1]);
-          } else if (perfScale > 0.55) {
-            // Ya en 'Baja': último recurso, reducir la resolución interna
-            lastDowngrade = t;
-            perfScale = Math.max(0.55, perfScale * 0.82);
-            perfDirty = true;
-          }
-        }
+        if (!stalled) onFps?.(measured);
       }
       if (running && canRun()) raf = requestAnimationFrame(animate);
     };
@@ -492,7 +481,7 @@ export function useGargantuaRenderer({ mountRef, embedded, params, onReady, onFp
       renderer.forceContextLoss();
       if (container.contains(canvas)) container.removeChild(canvas);
     };
-  }, [embedded, mountRef, onContextStatus, onFps, onQualityChange]);
+  }, [embedded, mountRef, onContextStatus, onFps]);
 
   return { applyPreset, capture };
 }

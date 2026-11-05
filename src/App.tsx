@@ -396,6 +396,8 @@ function PortfolioApp() {
             profile={experienceProfile}
             onSimulationReady={handleHeroReady}
             onFps={reportFps}
+            tier={experienceTier}
+            webglAvailable={webglAvailable}
           />
 
           <ProjectsSection locale={locale} t={t} />

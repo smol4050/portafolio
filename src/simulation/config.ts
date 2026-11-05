@@ -47,6 +47,9 @@ export const CAMERA_PRESETS = {
   miller: { radius: 8.5, theta: Math.PI / 3, phi: 1.5, fov: 62 }
 };
 
+// El hero empieza a 1.8× el radio habitual: sombra pequeña pero visible.
+export const CAMERA_INTRO_START_FACTOR = 1.8;
+
 export type CameraPresetKey = keyof typeof CAMERA_PRESETS;
 
 export interface RenderParameters extends SimulationSettings {

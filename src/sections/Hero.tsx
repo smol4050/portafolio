@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { AbsorbPhase } from '../simulation/config';
 import { HeroSimulation } from '../simulation/SimulationLoader';
 import type { copy } from '../data/translations';
 import type { ExperienceProfile } from '../experience/profiles';
+import type { ExperienceTier } from '../experience/profiles';
+import type { CameraApi } from '../simulation/useGargantuaRenderer';
+import { useOriginSequence } from '../experience/useOriginSequence';
 
 interface HeroProps {
   t: typeof copy['es'];
@@ -12,6 +15,8 @@ interface HeroProps {
   profile: ExperienceProfile;
   onSimulationReady: () => void;
   onFps: (fps: number) => void;
+  tier: ExperienceTier;
+  webglAvailable: boolean;
 }
 
 // Radio aparente de la sombra (≈ 2.6 rs) respecto a la mitad del alto del canvas,
@@ -23,12 +28,35 @@ const setVar = (el: HTMLElement, name: string, value: string) => {
   if (el.style.getPropertyValue(name) !== value) el.style.setProperty(name, value);
 };
 
-export default function Hero({ t, phase = 'idle', onEnterSimulation, showSimulation, profile, onSimulationReady, onFps }: HeroProps) {
+export default function Hero({ t, phase = 'idle', onEnterSimulation, showSimulation, profile, onSimulationReady, onFps, tier, webglAvailable }: HeroProps) {
   const heroRef = useRef<HTMLElement>(null);
   const bhRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const phaseRef = useRef<AbsorbPhase>(phase);
   const rafRef = useRef(0);
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
+  const pointerDraggedRef = useRef(false);
+  const [cameraApi, setCameraApi] = useState<CameraApi | null>(null);
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const sequence = useOriginSequence({ tier, reducedMotion: prefersReducedMotion, webglAvailable, cameraApi });
+  const startCameraDolly = sequence.onSimulationReady;
+  const handleReady = useCallback(() => {
+    onSimulationReady();
+    startCameraDolly();
+  }, [onSimulationReady, startCameraDolly]);
+  const handleBackgroundClick = (event: React.MouseEvent<HTMLElement>) => {
+    if (pointerDraggedRef.current) {
+      pointerDraggedRef.current = false;
+      pointerStartRef.current = null;
+      return;
+    }
+    const target = event.target as HTMLElement;
+    if (target.closest('a, button, input, select, textarea, .experience-selector')) {
+      pointerStartRef.current = null;
+      return;
+    }
+    sequence.skip();
+  };
 
   useLayoutEffect(() => {
     phaseRef.current = phase;
@@ -135,6 +163,12 @@ export default function Hero({ t, phase = 'idle', onEnterSimulation, showSimulat
       ref={heroRef}
       className={`hero ${isAbsorbing ? 'is-collapsing' : ''}`}
       id="inicio"
+      onClick={handleBackgroundClick}
+      onPointerDown={(event) => { pointerStartRef.current = { x: event.clientX, y: event.clientY }; pointerDraggedRef.current = false; }}
+      onPointerMove={(event) => {
+        const start = pointerStartRef.current;
+        if (start && Math.hypot(event.clientX - start.x, event.clientY - start.y) > 5) pointerDraggedRef.current = true;
+      }}
     >
       {/* 1. Fondo atmosférico */}
       <div className="hero-backdrop" />
@@ -142,8 +176,10 @@ export default function Hero({ t, phase = 'idle', onEnterSimulation, showSimulat
       {/* 2. Canvas WebGL 3D en segundo plano (su centro = centro del agujero negro) */}
       <div ref={bhRef} className={canvasClass}>
         {/* Embebido: cámara fija en órbita, sin zoom por rueda (no secuestra el scroll de la página) */}
-        {showSimulation && <HeroSimulation phase={phase} profile={profile} onReady={onSimulationReady} onFps={onFps} />}
+        {showSimulation && <HeroSimulation phase={phase} profile={profile} onReady={handleReady} onFps={onFps} onCameraApi={setCameraApi} introStart={sequence.status === 'playing'} />}
       </div>
+
+      {sequence.status === 'playing' && <button className="origin-skip" type="button" onClick={sequence.skip}>{t.heroSkip}</button>}
 
       {/* 3. Superposiciones ópticas */}
       <div className="hero-horizon" style={{ pointerEvents: 'none' }} />

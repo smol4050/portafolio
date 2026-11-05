@@ -3,7 +3,7 @@ import { DEFAULTS, deriveGeometry, type AbsorbPhase, type CameraPresetKey, type 
 import { QUALITY_ORDER } from '../simulation/config';
 import SimulationControls from '../simulation/SimulationControls';
 import { SpaceSoundSynth } from '../simulation/SpaceSoundSynth';
-import { useGargantuaRenderer } from '../simulation/useGargantuaRenderer';
+import { useGargantuaRenderer, type CameraApi } from '../simulation/useGargantuaRenderer';
 import type { ExperienceProfile } from '../experience/profiles';
 export type { AbsorbPhase } from '../simulation/config';
 
@@ -15,9 +15,11 @@ interface GargantuaSimulationProps {
   onReady?: () => void;
   onFps?: (fps: number) => void;
   profile: ExperienceProfile;
+  onCameraApi?: (api: CameraApi | null) => void;
+  introStart?: boolean;
 }
 
-export default function GargantuaSimulation({ embedded = false, absorbPhase = 'idle', onClose, onReady, onFps, profile }: GargantuaSimulationProps) {
+export default function GargantuaSimulation({ embedded = false, absorbPhase = 'idle', onClose, onReady, onFps, profile, onCameraApi, introStart }: GargantuaSimulationProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const synthRef = useRef<SpaceSoundSynth | null>(null);
 
@@ -42,7 +44,9 @@ export default function GargantuaSimulation({ embedded = false, absorbPhase = 'i
     profile,
     onReady,
     onFps: handleFps,
-    onContextStatus: setContextAvailable
+    onContextStatus: setContextAvailable,
+    onCameraApi,
+    introStart
   });
 
   const handleQualityChange = useCallback((next: QualityKey) => {

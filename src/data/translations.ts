@@ -53,6 +53,8 @@ export const copy = {
     heroProjectsCta: 'Ver Proyectos',
     heroScrollPrompt: 'DESPLAZAR PARA EXPLORAR',
     heroSignature: 'SMOL4050 // 2026',
+    heroSkip: 'Saltar',
+    heroOrigin: 'ORIGIN',
     heroSideLabel: 'SISTEMAS INTERACTIVOS & GRÁFICOS',
 
     selected: '01 / TRABAJO SELECCIONADO',
@@ -191,6 +193,8 @@ export const copy = {
     heroProjectsCta: 'View Projects',
     heroScrollPrompt: 'SCROLL TO EXPLORE',
     heroSignature: 'SMOL4050 // 2026',
+    heroSkip: 'Skip',
+    heroOrigin: 'ORIGIN',
     heroSideLabel: 'INTERACTIVE & GRAPHICS SYSTEMS',
 
     selected: '01 / SELECTED WORK',

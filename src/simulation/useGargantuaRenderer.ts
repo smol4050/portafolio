@@ -7,8 +7,9 @@ import type { ExperienceProfile } from '../experience/profiles';
 export interface CameraState { radius: number; theta: number; phi: number; fov: number }
 export type CameraEasing = 'easeOutCubic';
 export interface CameraAnimationOptions { duration: number; easing?: CameraEasing }
+export type CameraAnimationResult = 'completed' | 'cancelled';
 export interface CameraApi {
-  animateCameraTo: (target: Partial<CameraState>, options: CameraAnimationOptions) => void;
+  animateCameraTo: (target: Partial<CameraState>, options: CameraAnimationOptions) => Promise<CameraAnimationResult>;
   cancelCameraAnimation: () => void;
   setCameraState: (state: CameraState) => void;
   getCameraState: () => Readonly<CameraState>;
@@ -41,9 +42,24 @@ export function useGargantuaRenderer({ mountRef, embedded, params, profile, onRe
   const camCurRef = useRef({ ...CAMERA_PRESETS.orbit });
   const interactRef = useRef({ dragging: false, last: 0 });
   const shotRef = useRef(false);
-  const animationRef = useRef<{ from: CameraState; to: CameraState; duration: number; elapsed: number } | null>(null);
+  const animationRef = useRef<{ from: CameraState; to: CameraState; duration: number; elapsed: number; resolve: (result: CameraAnimationResult) => void } | null>(null);
   const distanceListenersRef = useRef(new Set<(radius: number) => void>());
   const cameraStateRef = useRef<CameraState>({ ...CAMERA_PRESETS.orbit });
+
+  const notifyCameraDistance = useCallback((radius = cameraStateRef.current.radius) => {
+    for (const listener of distanceListenersRef.current) listener(radius);
+  }, []);
+
+  const cancelActiveCameraAnimation = useCallback(() => {
+    const animation = animationRef.current;
+    if (!animation) return;
+    animationRef.current = null;
+    camTargetRef.current = { ...camCurRef.current };
+    cameraStateRef.current = { ...camCurRef.current };
+    interactRef.current.last = performance.now();
+    notifyCameraDistance(cameraStateRef.current.radius);
+    animation.resolve('cancelled');
+  }, [notifyCameraDistance]);
 
   useLayoutEffect(() => {
     paramsRef.current = params;
@@ -53,38 +69,48 @@ export function useGargantuaRenderer({ mountRef, embedded, params, profile, onRe
   useLayoutEffect(() => { onReadyRef.current = onReady; }, [onReady]);
 
   const applyPreset = useCallback((key: CameraPresetKey) => {
+    const animation = animationRef.current;
+    animationRef.current = null;
+    camTargetRef.current = { ...camCurRef.current };
+    cameraStateRef.current = { ...camCurRef.current };
     const goal = { ...CAMERA_PRESETS[key] };
     goal.theta = camCurRef.current.theta + wrapPi(goal.theta - camCurRef.current.theta);
     camTargetRef.current = goal;
     interactRef.current.last = performance.now();
-  }, []);
+    notifyCameraDistance(cameraStateRef.current.radius);
+    animation?.resolve('cancelled');
+  }, [notifyCameraDistance]);
   const capture = useCallback(() => { shotRef.current = true; }, []);
   const cameraApi = useMemo<CameraApi>(() => ({
       animateCameraTo: (target, options) => {
+        cancelActiveCameraAnimation();
         const current = cameraStateRef.current;
-        animationRef.current = {
-          from: { ...current }, to: { ...current, ...target },
-          duration: Math.max(1, options.duration), elapsed: 0,
-        };
+        interactRef.current.last = performance.now();
+        return new Promise((resolve) => {
+          animationRef.current = {
+            from: { ...current }, to: { ...current, ...target },
+            duration: Math.max(1, options.duration), elapsed: 0, resolve,
+          };
+        });
       },
-      cancelCameraAnimation: () => {
-        if (animationRef.current) {
-          animationRef.current = null;
-          camTargetRef.current = { ...camCurRef.current };
-        }
-      },
+      cancelCameraAnimation: cancelActiveCameraAnimation,
       setCameraState: (state) => {
+        const animation = animationRef.current;
         animationRef.current = null;
         camTargetRef.current = { ...state };
         camCurRef.current = { ...state };
         cameraStateRef.current = { ...state };
+        interactRef.current.last = performance.now();
+        notifyCameraDistance(cameraStateRef.current.radius);
+        animation?.resolve('cancelled');
       },
       getCameraState: () => ({ ...cameraStateRef.current }),
       subscribeCameraDistance: (listener) => {
         distanceListenersRef.current.add(listener);
+        listener(cameraStateRef.current.radius);
         return () => distanceListenersRef.current.delete(listener);
       },
-  }), []);
+  }), [cancelActiveCameraAnimation, notifyCameraDistance]);
   const introStartRef = useRef(introStart);
 
   useEffect(() => {
@@ -234,10 +260,7 @@ export function useGargantuaRenderer({ mountRef, embedded, params, profile, onRe
       const target = e.target as HTMLElement | null;
       if (e.target !== canvas && target?.tagName !== 'CANVAS') return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
-      if (animationRef.current) {
-        animationRef.current = null;
-        camTargetRef.current = { ...camCurRef.current };
-      }
+      cancelActiveCameraAnimation();
       try { canvas.setPointerCapture(e.pointerId); } catch { /* puntero ya liberado */ }
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       interactRef.current.dragging = true;
@@ -249,10 +272,7 @@ export function useGargantuaRenderer({ mountRef, embedded, params, profile, onRe
       if (!prev) return;
       const dx = e.clientX - prev.x;
       const dy = e.clientY - prev.y;
-      if (animationRef.current) {
-        animationRef.current = null;
-        camTargetRef.current = { ...camCurRef.current };
-      }
+      cancelActiveCameraAnimation();
       const tgt = camTargetRef.current;
       tgt.theta -= dx * 0.005;
       tgt.phi = Math.max(0.05, Math.min(Math.PI - 0.05, tgt.phi - dy * 0.005));
@@ -268,10 +288,7 @@ export function useGargantuaRenderer({ mountRef, embedded, params, profile, onRe
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      if (animationRef.current) {
-        animationRef.current = null;
-        camTargetRef.current = { ...camCurRef.current };
-      }
+      cancelActiveCameraAnimation();
       const tgt = camTargetRef.current;
       tgt.radius = Math.max(4, Math.min(45, tgt.radius * Math.exp(e.deltaY * 0.001)));
       interactRef.current.last = performance.now();
@@ -409,7 +426,6 @@ export function useGargantuaRenderer({ mountRef, embedded, params, profile, onRe
         for (const key of ['radius', 'theta', 'phi', 'fov'] as const) {
           tgt[key] = cameraAnimation.from[key] + (cameraAnimation.to[key] - cameraAnimation.from[key]) * p;
         }
-        if (cameraAnimation.elapsed >= cameraAnimation.duration) animationRef.current = null;
       }
 
       // La cámara se precipita hacia la singularidad durante la sobrecarga
@@ -423,13 +439,18 @@ export function useGargantuaRenderer({ mountRef, embedded, params, profile, onRe
         Object.assign(cur, cameraAnimation.to);
         Object.assign(tgt, cameraAnimation.to);
         animationRef.current = null;
-      }
-      cameraStateRef.current = { radius: cur.radius, theta: cur.theta, phi: cur.phi, fov: cur.fov };
-      if (distanceListenersRef.current.size) {
-        cameraNotifyElapsed += dt * 1000;
-        if (cameraNotifyElapsed >= CAMERA_DISTANCE_NOTIFY_MS) {
-          cameraNotifyElapsed %= CAMERA_DISTANCE_NOTIFY_MS;
-          for (const listener of distanceListenersRef.current) listener(cur.radius);
+        cameraStateRef.current = { radius: cur.radius, theta: cur.theta, phi: cur.phi, fov: cur.fov };
+        inter.last = performance.now();
+        notifyCameraDistance(cameraStateRef.current.radius);
+        cameraAnimation.resolve('completed');
+      } else {
+        cameraStateRef.current = { radius: cur.radius, theta: cur.theta, phi: cur.phi, fov: cur.fov };
+        if (distanceListenersRef.current.size) {
+          cameraNotifyElapsed += dt * 1000;
+          if (cameraNotifyElapsed >= CAMERA_DISTANCE_NOTIFY_MS) {
+            cameraNotifyElapsed %= CAMERA_DISTANCE_NOTIFY_MS;
+            for (const listener of distanceListenersRef.current) listener(cur.radius);
+          }
         }
       }
 
@@ -545,6 +566,7 @@ export function useGargantuaRenderer({ mountRef, embedded, params, profile, onRe
     });
 
     return () => {
+      cancelActiveCameraAnimation();
       disposed = true;
       loopReady = false;
       stopLoop();
@@ -572,7 +594,7 @@ export function useGargantuaRenderer({ mountRef, embedded, params, profile, onRe
       renderer.forceContextLoss();
       if (container.contains(canvas)) container.removeChild(canvas);
     };
-  }, [embedded, mountRef, onContextStatus, onFps, onCameraApi, cameraApi]);
+  }, [embedded, mountRef, onContextStatus, onFps, onCameraApi, cameraApi, cancelActiveCameraAnimation, notifyCameraDistance]);
 
   return { applyPreset, capture };
 }

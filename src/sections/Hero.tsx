@@ -115,9 +115,9 @@ export default function Hero({ t, phase = 'idle', onEnterSimulation, showSimulat
       if (cameraDistanceRef.current) cameraDistanceRef.current.textContent = `R ${radius.toFixed(1)}`;
     };
     writeDistance(cameraApi.getCameraState().radius);
-    if (sequence.status !== 'playing') return;
+    if (sequence.status !== 'playing' && !sequence.pendingCameraFinal) return;
     return cameraApi.subscribeCameraDistance(writeDistance);
-  }, [cameraApi, sequence.status]);
+  }, [cameraApi, sequence.pendingCameraFinal, sequence.status]);
 
   /**
    * Gravedad dinámica por letra. SIN setState: escribe --pull / --dirx / --diry / --ang

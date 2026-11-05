@@ -78,8 +78,19 @@
   z-index: var(--z-sticky);
 }
 
-/* "LUIS" en blanco puro (anula el degradado de .hero-title > span) */
-.hero-title > .title-word {
+/* Nombre completo en líneas independientes dentro de máscaras estables. */
+.hero-title > .hero-name-mask {
+  display: block;
+  overflow: visible;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.04em 0 0.1em;
+  color: var(--color-white-cold);
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.hero-title .title-word {
   display: inline-block;
   padding: 0;
   color: var(--color-white-cold);
@@ -88,11 +99,26 @@
 }
 
 /* El contenedor no pinta degradado propio: cada letra lleva el suyo */
-.hero-title > .gravity-text {
+.hero-title .gravity-text {
   display: inline-flex;
   padding: 0;
   white-space: nowrap;
   background: none;
+}
+
+.hero-title .hero-name-line {
+  display: block;
+  white-space: nowrap;
+}
+
+.hero-title .hero-name-line.gravity-text {
+  display: inline-flex;
+  font-size: 1.06em;
+  font-weight: var(--font-weight-heavy);
+}
+
+.hero.origin-playing .hero-name-mask {
+  overflow: hidden;
 }
 
 .gravity-char {
@@ -100,6 +126,7 @@
   --dirx: 1;
   --diry: 0;
   --ang: 0deg;
+  --gravity-strength: 1;
 
   display: inline-block;
   position: relative;
@@ -115,23 +142,23 @@
      del eje letra→agujero negro + flexión (skewX) */
   transform:
     translate(
-      calc(var(--dirx) * var(--pull) * 46px),
-      calc(var(--diry) * var(--pull) * 46px)
+      calc(var(--dirx) * var(--pull) * var(--gravity-strength) * 46px),
+      calc(var(--diry) * var(--pull) * var(--gravity-strength) * 46px)
     )
     rotate(var(--ang))
-    scaleX(calc(1 + var(--pull) * 2.2))
-    scaleY(calc(1 - var(--pull) * 0.3))
-    skewX(calc(var(--pull) * -30deg))
+    scaleX(calc(1 + var(--pull) * var(--gravity-strength) * 2.2))
+    scaleY(calc(1 - var(--pull) * var(--gravity-strength) * 0.3))
+    skewX(calc(var(--pull) * var(--gravity-strength) * -30deg))
     rotate(calc(var(--ang) * -1));
 
   /* Desenfoque relacional + estela luminosa proyectada hacia la singularidad */
   filter:
-    blur(calc(var(--pull) * 3.5px))
+    blur(calc(var(--pull) * var(--gravity-strength) * 3.5px))
     drop-shadow(
-      calc(var(--dirx) * var(--pull) * 22px)
-      calc(var(--diry) * var(--pull) * 22px)
-      calc(4px + var(--pull) * 14px)
-      rgba(168, 85, 247, calc(var(--pull) * 0.9))
+      calc(var(--dirx) * var(--pull) * var(--gravity-strength) * 22px)
+      calc(var(--diry) * var(--pull) * var(--gravity-strength) * 22px)
+      calc(4px + var(--pull) * var(--gravity-strength) * 14px)
+      rgba(168, 85, 247, calc(var(--pull) * var(--gravity-strength) * 0.9))
     );
   opacity: calc(1 - var(--pull) * 0.55);
 }

@@ -1,7 +1,3 @@
-.hero-content {
-  animation: hero-enter 850ms var(--ease-enter) both;
-}
-
 .hero-backdrop {
   animation: atmosphere-breathe 16s var(--ease-inout) infinite alternate;
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import type { AbsorbPhase } from '../simulation/config';
 import { HeroSimulation } from '../simulation/SimulationLoader';
 import type { copy } from '../data/translations';
@@ -22,6 +22,18 @@ interface HeroProps {
 // Radio aparente de la sombra (≈ 2.6 rs) respecto a la mitad del alto del canvas,
 // con la cámara de órbita por defecto (radio 16.5, fov 36°).
 const SHADOW_RADIUS_RATIO = 0.45;
+const ORIGIN_VISUAL_TIMING = {
+  irisStage: 0.64,
+  nameStart: 0.06,
+  nameDuration: 0.13,
+  nameStagger: 0.035,
+  refractionDelay: 0.24,
+  descriptionStart: 0.23,
+  descriptionDuration: 0.25,
+  descriptionStagger: 0.045,
+  accessStart: 0.9,
+  accessDuration: 0.07,
+} as const;
 
 // Escribe una custom property solo si cambió (evita recálculos de estilo inútiles)
 const setVar = (el: HTMLElement, name: string, value: string) => {
@@ -37,11 +49,13 @@ export default function Hero({ t, phase = 'idle', onEnterSimulation, showSimulat
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const pointerDraggedRef = useRef(false);
   const [cameraApi, setCameraApi] = useState<CameraApi | null>(null);
+  const [simulationReady, setSimulationReady] = useState(false);
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const sequence = useOriginSequence({ tier, reducedMotion: prefersReducedMotion, webglAvailable, cameraApi });
   const startCameraDolly = sequence.onSimulationReady;
   const handleReady = useCallback(() => {
     onSimulationReady();
+    setSimulationReady(true);
     startCameraDolly();
   }, [onSimulationReady, startCameraDolly]);
   const handleBackgroundClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -64,6 +78,46 @@ export default function Hero({ t, phase = 'idle', onEnterSimulation, showSimulat
 
   const gravityWord = t.heroNameLast.split('');
   const isAbsorbing = phase !== 'idle';
+  const isOriginPlaying = sequence.status === 'playing';
+  const originStyle: CSSProperties = {
+    '--origin-total-duration': `${sequence.duration}ms`,
+    '--origin-iris-duration': `${sequence.duration * ORIGIN_VISUAL_TIMING.irisStage}ms`,
+    '--origin-name-delay': `${sequence.duration * ORIGIN_VISUAL_TIMING.nameStart}ms`,
+    '--origin-name-duration': `${sequence.duration * ORIGIN_VISUAL_TIMING.nameDuration}ms`,
+    '--origin-name-stagger': `${sequence.duration * ORIGIN_VISUAL_TIMING.nameStagger}ms`,
+    '--origin-refraction-delay': `${sequence.duration * ORIGIN_VISUAL_TIMING.refractionDelay}ms`,
+    '--origin-description-delay': `${sequence.duration * ORIGIN_VISUAL_TIMING.descriptionStart}ms`,
+    '--origin-description-duration': `${sequence.duration * ORIGIN_VISUAL_TIMING.descriptionDuration}ms`,
+    '--origin-description-stagger': `${sequence.duration * ORIGIN_VISUAL_TIMING.descriptionStagger}ms`,
+    '--origin-access-delay': `${sequence.duration * ORIGIN_VISUAL_TIMING.accessStart}ms`,
+    '--origin-access-duration': `${sequence.duration * ORIGIN_VISUAL_TIMING.accessDuration}ms`,
+  } as CSSProperties;
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (!isOriginPlaying) return;
+    root.dataset.originActive = tier;
+    root.style.setProperty('--origin-access-delay', `${sequence.duration * ORIGIN_VISUAL_TIMING.accessStart}ms`);
+    root.style.setProperty('--origin-access-duration', `${sequence.duration * ORIGIN_VISUAL_TIMING.accessDuration}ms`);
+    root.style.setProperty('--origin-total-duration', `${sequence.duration}ms`);
+    return () => {
+      delete root.dataset.originActive;
+      root.style.removeProperty('--origin-access-delay');
+      root.style.removeProperty('--origin-access-duration');
+      root.style.removeProperty('--origin-total-duration');
+    };
+  }, [isOriginPlaying, sequence.duration, tier]);
+
+  const cameraDistanceRef = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!cameraApi || !cameraDistanceRef.current) return;
+    const writeDistance = (radius: number) => {
+      if (cameraDistanceRef.current) cameraDistanceRef.current.textContent = `R ${radius.toFixed(1)}`;
+    };
+    writeDistance(cameraApi.getCameraState().radius);
+    if (sequence.status !== 'playing') return;
+    return cameraApi.subscribeCameraDistance(writeDistance);
+  }, [cameraApi, sequence.status]);
 
   /**
    * Gravedad dinámica por letra. SIN setState: escribe --pull / --dirx / --diry / --ang
@@ -161,7 +215,8 @@ export default function Hero({ t, phase = 'idle', onEnterSimulation, showSimulat
   return (
     <section
       ref={heroRef}
-      className={`hero ${isAbsorbing ? 'is-collapsing' : ''}`}
+      className={`hero ${isAbsorbing ? 'is-collapsing' : ''} ${isOriginPlaying ? `origin-playing origin-${tier}` : ''} ${isOriginPlaying && simulationReady ? 'origin-canvas-ready' : ''}`}
+      style={originStyle}
       id="inicio"
       onClick={handleBackgroundClick}
       onPointerDown={(event) => { pointerStartRef.current = { x: event.clientX, y: event.clientY }; pointerDraggedRef.current = false; }}
@@ -182,9 +237,16 @@ export default function Hero({ t, phase = 'idle', onEnterSimulation, showSimulat
       {sequence.status === 'playing' && <button className="origin-skip" type="button" onClick={sequence.skip}>{t.heroSkip}</button>}
 
       {/* 3. Superposiciones ópticas */}
-      <div className="hero-horizon" style={{ pointerEvents: 'none' }} />
-      <div className="hero-grid" style={{ pointerEvents: 'none' }} />
-      <div className="hero-vignette" style={{ pointerEvents: 'none' }} />
+      <div className="hero-horizon" style={{ pointerEvents: 'none' }} aria-hidden="true" />
+      <div className="hero-grid" style={{ pointerEvents: 'none' }} aria-hidden="true" />
+      {tier !== 'minimal' && <div className="hero-vignette" style={{ pointerEvents: 'none' }} aria-hidden="true" />}
+      {tier !== 'minimal' && <div className="hero-origin-grain" aria-hidden="true" />}
+
+      <div className="hero-origin-hud" aria-label={`${t.heroOrigin} ${t[`experienceTier_${tier}`]}`}>
+        <span>00 / {t.heroOrigin}</span>
+        <span>{t[`experienceTier_${tier}`]}</span>
+        <span ref={cameraDistanceRef} className="hero-origin-distance" />
+      </div>
 
       {/* UI Superior */}
       <div className="hero-topline" style={{ pointerEvents: 'none' }}>
@@ -199,27 +261,25 @@ export default function Hero({ t, phase = 'idle', onEnterSimulation, showSimulat
           if (e.target === e.currentTarget) scheduleGravity();
         }}
       >
-        <div className="hero-intro" data-absorb>
+        <div className="hero-intro origin-descriptor" data-absorb>
           <span className="hero-indicator" />
           <span>{t.heroIntro}</span>
         </div>
 
         <h1 className="hero-title" ref={titleRef}>
-          <span className="title-word" data-absorb>{t.heroNameFirst}</span>{' '}
-          <span className="gravity-text">
+          <span className="hero-name-mask" data-absorb><span className="hero-name-line title-word">{t.heroNameFirst}</span></span>
+          <span className="hero-name-mask" data-absorb><span className="hero-name-line gravity-text" aria-label={t.heroNameLast}>
             {gravityWord.map((char, index) => (
-              <span key={index} className="gravity-char" data-absorb>
-                {char}
-              </span>
+              <span key={`${char}-${index}`} className="gravity-char" aria-hidden="true">{char}</span>
             ))}
-          </span>
+          </span></span>
         </h1>
 
-        <p className="hero-description" data-absorb>
+        <p className="hero-description origin-descriptor" data-absorb>
           {t.heroVisualDescription}
         </p>
 
-        <div className="hero-actions">
+        <div className="hero-actions origin-access">
           <button
             type="button"
             className="button button-primary"

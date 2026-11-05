@@ -37,7 +37,7 @@ Este documento registra la base visual existente del portafolio y los tokens ini
 |---|---|---|
 | Display | `--font-display` | Barlow Condensed, con las cargas existentes 500, 600, 700, 800 y 900; títulos y encabezados. |
 | Cuerpo | `--font-body` | DM Sans, con 400, 500, 600 y 700; párrafos y controles. |
-| Técnica | `--font-mono` | IBM Plex Mono con 400 y 500, fallback `monospace`. Se aplica al único estilo que ya era monoespaciado: `.gargantua-slider-val`, los valores numéricos de la simulación. |
+| Técnica | `--font-mono` | IBM Plex Mono con 400 y 500, fallback `monospace`. Se aplica a `.gargantua-slider-val`, a la etiqueta del hero y al HUD ORIGIN. |
 
 Google Fonts se declara una sola vez en `tokens.css` con `display=swap`. No se añadieron paquetes npm. La escala de tamaño con sustituciones actuales incluye `--font-size-micro` (0.55rem), `--font-size-caption` (0.65rem), `--font-size-small` (0.72rem), `--font-size-reading` (0.85rem) y `--font-size-body` (1rem). Los pesos y métricas recurrentes se expresan como `--font-weight-*`, `--line-height-*` y `--tracking-*`.
 
@@ -53,6 +53,9 @@ Google Fonts se declara una sola vez en `tokens.css` con `display=swap`. No se a
 - Curvas específicas ya repetidas: `--ease-enter`, `--ease-implode` y `--ease-overload`.
 - Duraciones base: `--duration-fast` (180 ms), `--duration-base` (200 ms), `--duration-moderate` (300 ms) y `--duration-slow` (600 ms).
 - Con `prefers-reduced-motion: reduce`, esas duraciones pasan a `--duration-reduced` (0.01 ms), el valor mínimo que ya utiliza el sitio. Las reglas actuales que desactivan animaciones se conservan.
+- La entrada general del hero usa `--duration-slow` (600 ms). ORIGIN escala revelado, escaneo, iris y acceso respecto a los 5000 ms de EXTREME o 3000 ms de CINEMATIC; la máscara del canvas usa `clip-path: circle()` para que el recorte pueda componerse como capa durante la apertura. Su contenido WebGL ya es una superficie GPU y el recorte evita recalcular el shader.
+- La refracción ORIGIN usa los tokens de error rosa y azul existentes (`--color-state-error` y `--color-blue-soft`), con una convergencia de 600 ms (`--duration-slow`). No añade colores a la paleta.
+- En viewports de hasta 1000 px, la gravedad tipográfica del apellido se atenúa y usa el blanco existente para que la identidad se mantenga legible delante del disco. En escritorio conserva la fuerza y el gradiente previos.
 
 Otros tiempos existentes —por ejemplo 150, 160, 220, 250, 260, 450, 850, 900, 1000, 1100, 1200 ms y la animación de 32 s— no se han redondeado ni fusionado.
 
